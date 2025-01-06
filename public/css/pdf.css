@@ -1,0 +1,98 @@
+html{
+	font-family: 'Roboto', sans-serif;
+	/*margin-right: 0;*/
+	font-size: 11px;
+	padding: 0;
+}
+body {
+	text-align: center!important;
+	/*margin-right: 0;*/
+	/* margin: 2mm;
+	padding: 2mm; */
+	padding-top: 30mm;
+	/*width: 700px;
+	margin-top:20mm;*/
+}
+img.logo {
+	width: 25%;
+	/* opacity: 0.5; */
+	/*width: 30mm;
+	height: 15mm;*/
+}
+img.water-mark {
+	opacity: 0.1;
+	display: block;
+	padding-top: 35%!important;
+    width: 55%;
+}
+/* @font-face {
+	font-family: 'Avenir';
+	src: url('http://localhost/wbc/public/fonts/avenir/Avenir-Book.ttf') format('truetype');
+}
+@font-face {
+	font-family: 'Avenir';
+	src: url('http://localhost/wbc/public/fonts/avenir/AvenirNext-Bold.ttf') format('truetype');
+	font-weight: bold;
+}
+@font-face {
+	font-family: 'Avenir';
+	src: url('http://localhost/wbc/public/fonts/avenir/Avenir-Next-LT-Pro-Italic.ttf') format('truetype');
+	font-style: italic;
+}
+.av-font {
+	font-family: 'Avenir'!important;
+} */
+.white-space-3:before{
+	content: "\00a0 \00a0 \00a0";
+}
+.white-space-4:before{
+	content: "\00a0 \00a0 \00a0 \00a0";
+}
+.white-space-5:before{
+	content: "\00a0 \00a0 \00a0 \00a0 \00a0";
+}
+.fixed-top{
+	position:fixed; 
+}
+.fixed-middle {
+	position: fixed;
+}
+.capitalize{
+	text-transform: capitalize;
+}
+.uppercase{
+	text-transform: uppercase!important;
+}
+.start-page{
+	padding-top: 5mm;
+}
+.break{
+    display: block;
+}
+.letter-space{
+	letter-spacing: 5px;
+}
+.no-padding{
+	padding: 0px;
+}
+.no-margin{
+	margin: 0px;
+}
+.justify{
+	text-align: justify!important;
+}
+.center{
+	text-align: center!important;
+}
+.left{
+	text-align: left!important;
+}
+.right{
+	text-align: right!important;
+}
+.new-page{
+	page-break-after: always;
+}
+.container{
+	width: 100%;
+}
