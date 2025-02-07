@@ -4,13 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $menu = "Users";
         $title = "Users";
+
+        // Parámetros de búsqueda y ordenación
+        $search = $request->input('search');
+        $orderBy = $request->input('order_by', 'nombre');
 
         // Estadísticas
         $usuariosActivos = User::where('activo', true)->count();
@@ -18,20 +24,27 @@ class UsersController extends Controller
         $usuariosTotales = User::count();
 
         // Listas de usuarios
-        $usuariosAdmin = User::select('id','nombre', 'correo', 'role', 'segmento', 'created_at')
-            ->where('role', 'ROLE_ADMIN')
-            ->orderBy('nombre', 'asc') 
+        $usuariosAdmin = User::where('role', 'ROLE_ADMIN')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($subquery) use ($search) {
+                    $subquery->where('nombre', 'like', "%{$search}%")
+                        ->orWhere('correo', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($orderBy, 'asc') // Ordenar según el campo seleccionado
             ->get();
-        $usuariosApp = User::select('id','nombre', 'correo', 'segmento', 'created_at')
-            ->where('role', 'ROLE_USER')
-            ->orderBy('nombre', 'asc') 
+
+        $usuariosApp = User::where('role', 'ROLE_USER')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($subquery) use ($search) {
+                    $subquery->where('nombre', 'like', "%{$search}%")
+                        ->orWhere('correo', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($orderBy, 'asc') // Ordenar según el campo seleccionado
             ->paginate(10);
-            
-        
 
         return view('users.index', compact('menu', 'title', 'usuariosActivos', 'usuariosInactivos', 'usuariosTotales', 'usuariosAdmin', 'usuariosApp'));
-        
-
     }
 
     public function create()
@@ -43,115 +56,107 @@ class UsersController extends Controller
     }
 
     public function add(Request $request)
-{
-    // Validación de datos
-    $validated = $request->validate([
-        'nombre' => 'required|string|max:120',
-        'username' => 'required|string|max:60|unique:usuarios,username',
-        'correo' => 'required|email|unique:usuarios,correo',
-        'plainPassword' => 'nullable|string|max:60',
-        'role' => 'required|string',
-        'segmento' => 'nullable|string|max:80',
-    ]);
+    {
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:150',
+            'username' => 'required|string|max:190|unique:usuarios,username',
+            'correo' => 'required|email|unique:usuarios,correo',
+            'plainPassword' => 'nullable|string|max:190',
+            'role' => 'required|string|in:ROLE_ADMIN,ROLE_USER,ROLE_RECINTO',
+            'segmento' => 'nullable|string|max:80',
+        ]);
 
-    // Crear usuario con los datos validados
-    $user = new User([
-        'nombre' => $validated['nombre'],
-        'username' => $validated['username'],
-        'correo' => $validated['correo'],
-        'role' => $validated['role'], // Cambiado para coincidir con los nombres validados
-        'segmento' => $validated['segmento'],
-    ]);
+        $user = new User([
+            'nombre' => $validated['nombre'],
+            'username' => $validated['username'],
+            'correo' => $validated['correo'],
+            'role' => $validated['role'],
+            'segmento' => $validated['segmento'] ?? 'General',
+        ]);
 
-    // Asignar contraseña segura
-    $user->password = bcrypt($validated['plainPassword'] ?? Str::random(10));
+        $user->password = bcrypt($validated['plainPassword'] ?? Str::random(10));
+        $user->save();
 
-    // Guardar el usuario en la base de datos
-    $user->save();
+        return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');
+    }
 
-    // Redirigir con mensaje de éxito
-    return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');
-}
-
-
-
-    public function edit ($id)
+    public function edit($id)
     {
         $menu = "User";
         $title = "Edit User";
 
         $user = User::findOrFail($id);
 
-        return view('users.edit',compact('menu','title','user'));
+        return view('users.edit', compact('menu', 'title', 'user'));
     }
 
-    public function update (Request $request, $id)
+    public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
 
-        $validate = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'correo' => 'required|email|unique:users,correo,' . $id,
-            'activo' => 'boolean',
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:150',
+            'correo' => 'required|email|unique:usuarios,correo,' . $id,
+            'activo' => 'nullable|boolean',
         ]);
 
         $user->update($validated);
 
-        return redirect()->route('users.index')->with('sucess','User update Succesfully.');
+        return redirect()->route('users.index')->with('success', 'Usuario actualizado exitosamente.');
     }
 
     public function toggleActivation($id)
     {
-        $user =User::findOrFail($id);
+        $user = User::findOrFail($id);
         $user->activo = !$user->activo;
         $user->save();
 
-        return redirect()->route('users.index')->with('success','User Activation Status Update.');
+        return redirect()->route('users.index')->with('success', 'Estado de activación actualizado exitosamente.');
     }
 
-    public function delete ($id)
+    public function delete($id)
     {
         $user = User::findOrFail($id);
         $user->delete();
 
-        return redirect()->route('users.index')->with('success','User Delete Succesfully.');
-    }
-
-    public function sendNotification($type, $title, $content, $date, $time, $data, $users_id)
-    {
-        $validate = $request->validate ([
-            'id' => 'required|exists:users.id',
-            'mensaje' => 'required|string',
-            'titulo' => 'nullable|string',
-            'imagen' => 'nullable|image|max:2048',
-        ]);
-
-        $user = User::findOrFail($validated['id']);
-
-         // Aquí puedes implementar la lógica para enviar la notificación
-        // Ejemplo: Notification::send($user, new CustomNotification($validated));
-
-        return redirect()->route('users.index')->with('success','Notification sent Successfully.');
-    }
-
-    public function sendBulkNotification(Request $request)
-    {
-        $validate = $request->validate ([
-            'tipo' => 'required|in:todos,seleccionados',
-            'usuarios_seleccionados' => 'nullable|array',
-            'usuarios_seleccionados.*' => 'exists:users,id',
-            'mensaje' => 'requiered|string',
-            'titulo' => 'nulable|string',
-            'imagen' => 'nullable|image|max:2048',
-        ]);
-
-        $users = $validated['tipo'] === 'todos'
-        ? User::all()
-        : User::whereIn('id', $validated['usuarios_seleccionados'])->get();
-
-        // Aquí puedes implementar la lógica para enviar la notificación
-        // Ejemplo: Notification::send($users, new CustomNotification($validated));
-
-        return redirect()->route('users.index')->with('success','Bulks Notification sent Successfully.');
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado exitosamente.');
     }
 }
+
+    // public function sendNotification(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'id' => 'required|exists:users,id',
+    //         'mensaje' => 'required|string',
+    //         'titulo' => 'nullable|string',
+    //         'imagen' => 'nullable|image|max:2048',
+    //     ]);
+
+    //     $user = User::findOrFail($validated['id']);
+
+    //     // Lógica para enviar la notificación
+    //     Notification::send($user, new CustomNotification($validated));
+
+    //     return redirect()->route('users.index')->with('success', 'Notificación enviada exitosamente.');
+    // }
+
+    // public function sendBulkNotification(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'tipo' => 'required|in:todos,seleccionados',
+    //         'usuarios_seleccionados' => 'nullable|array',
+    //         'usuarios_seleccionados.*' => 'exists:users,id',
+    //         'mensaje' => 'required|string',
+    //         'titulo' => 'nullable|string',
+    //         'imagen' => 'nullable|image|max:2048',
+    //     ]);
+
+    //     $users = $validated['tipo'] === 'todos'
+    //         ? User::all()
+    //         : User::whereIn('id', $validated['usuarios_seleccionados'])->get();
+
+    //     // Lógica para enviar notificaciones en lote
+    //     Notification::send($users, new CustomNotification($validated));
+
+    //     return redirect()->route('users.index')->with('success', 'Notificaciones enviadas exitosamente.');
+    // }

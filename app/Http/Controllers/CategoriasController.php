@@ -6,39 +6,43 @@ use App\Models\Categoria;
 
 use Illuminate\Http\Request;
 
-class CategoriasController extends Controller {
+class CategoriasController extends Controller
+{
 
-    public function index () {
+    public function index()
+    {
 
-        
+
         $menu = "Categorias";
         $title = "Categorias";
 
         $categorias = Categoria::get();
 
-        return view('categorias.index', compact('menu','title', 'categorias'));
+        return view('categorias.index', compact('menu', 'title', 'categorias'));
     }
 
-    public function create () {
+    public function create()
+    {
 
         $menu = "Categorias";
         $title = "Categorias";
 
-        return view('categorias.form', compact('menu','title'));
-
+        return view('categorias.create', compact('menu', 'title'));
     }
 
-    public function edit ($id)
+    public function edit($id)
     {
-        $menu = "Categorias";
+        $menu = "Categorias"; // Define la variable $menu
         $title = "Editar Categoría";
 
-        $item = Categoria::findOrFail($id);
+        $categoria = Categoria::findOrFail($id);
 
-        return view('categorias.form',compact('menu','title','item'));
+        return view('categorias.create', compact('menu', 'title', 'categoria'));
     }
 
-    public function add (Request $request) {
+
+    public function add(Request $request)
+    {
 
         $categoria = new Categoria;
 
@@ -46,11 +50,11 @@ class CategoriasController extends Controller {
         $categoria->background = $request->background;
         $categoria->save();
 
-        return redirect()->route('categorias.index')->with('sucess','Categorias created Succesfully.');
- 
+        return redirect()->route('categorias.index')->with('sucess', 'Categorias created Succesfully.');
     }
 
-    public function update (Request $request, $id) {
+    public function update(Request $request, $id)
+    {
 
         $categoria = Categoria::where('id', $id)->first();
 
@@ -58,17 +62,18 @@ class CategoriasController extends Controller {
         $categoria->background = $request->background;
         $categoria->save();
 
-        return redirect()->route('categorias.index')->with('sucess','Categorias update Succesfully.');
- 
+        return redirect()->route('categorias.index')->with('sucess', 'Categorias update Succesfully.');
     }
 
-    public function delete (Request $request, $id) {
+    public function delete($id)
+    {
+        // Busca la categoría por ID, o lanza un error 404 si no se encuentra
+        $categoria = Categoria::findOrFail($id);
 
-        $categoria = Categoria::where('id', $id)->first();
-
+        // Elimina la categoría
         $categoria->delete();
 
-        return redirect()->route('categorias.index')->with('sucess','Categorias update Succesfully.');
- 
+        // Redirige con un mensaje de éxito
+        return redirect()->route('categorias.index')->with('success', 'Categoría eliminada con éxito.');
     }
 }

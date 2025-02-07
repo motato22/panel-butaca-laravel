@@ -25,10 +25,24 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $fillable = [ 
-        'role_id', 'fullname','nombre','correo','username','segmento', 'password', 'change_password', 'photo', 'phone',
-        'genre', 'country', 'country_iso', 'date_of_birth', 'remember_token', 'player_id', 
-        'apikey', 'clabe', 'payment_token', 'receive_emails', 'receive_notifications', 'status'
+    protected $fillable = [
+        'nombre',
+        'username',
+        'correo',
+        'password',
+        'role',
+        'activo',
+        'fecha_nacimiento',
+        'genero',
+        'recovery_date',
+        'telefono',
+        'cuenta_verificada',
+        'foto',
+        'foto_url',
+        'fcm_token',
+        'segmento',
+        'estado',
+        'ciudad',
     ];
 
     /**
@@ -58,7 +72,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Property::class, 'user_id');
     }
-    
+
 
     /**
      * Get all the payments related to the record
@@ -95,10 +109,10 @@ class User extends Authenticatable
      * Check the role of the current user.
      *
      */
-    public function checkRole( $roles )
+    public function checkRole($roles)
     {
-        foreach ( $roles as $role ) {
-            if ( $this->role->name == $role ) {
+        foreach ($roles as $role) {
+            if ($this->role->name == $role) {
                 return true;
             }
         }
@@ -114,7 +128,7 @@ class User extends Authenticatable
         $query = User::where('email', '=', $email);
 
         $query = $old_email ? $query->where('email', '!=', $old_email)->get() : $query->get();
-        
+
         return $query;
     }
 
@@ -123,35 +137,35 @@ class User extends Authenticatable
      */
     public function scopeFilter($query, array $filters)
     {
-        $query->when($filters['user'] ?? null, function($query, $user) {
-            $query->when( $user->role_id == 1 ?? null, function($query) use($user) {// Admin
+        $query->when($filters['user'] ?? null, function ($query, $user) {
+            $query->when($user->role_id == 1 ?? null, function ($query) use ($user) { // Admin
                 // All data
             })
-            ->when( $user->role_id == 2 ?? null, function($query) use($user) {// Customer
-                // Customer data
-            });
+                ->when($user->role_id == 2 ?? null, function ($query) use ($user) { // Customer
+                    // Customer data
+                });
         })
-        ->when($filters['roles'] ?? null, function($query, $roles) {
-            $query->when(is_array($roles) ?? null, function($que) use($roles) {
-                $que->whereIn('role_id', $roles);
+            ->when($filters['roles'] ?? null, function ($query, $roles) {
+                $query->when(is_array($roles) ?? null, function ($que) use ($roles) {
+                    $que->whereIn('role_id', $roles);
+                })
+                    ->when(! is_array($roles) ?? null, function ($que) use ($roles) {
+                        $que->where('role_id', $roles);
+                    });
             })
-            ->when(! is_array($roles) ?? null, function($que) use ($roles) {
-                $que->where('role_id', $roles);
+            ->when($filters['only_inactive'] ?? null, function ($query) {
+                $query->onlyTrashed();
+                // $query->withTrashed();
+            })
+            ->when($filters['nombre'] ?? null, function ($query, $nombre) {
+                $query->where('fullname', 'like', '%' . $nombre . '%');
+            })
+            ->when($filters['fecha_inicio'] ?? null, function ($query, $fecha_inicio) {
+                $query->where('created_at', '>=', $fecha_inicio);
+            })
+            ->when($filters['fecha_fin'] ?? null, function ($query, $fecha_fin) {
+                $query->where('created_at', '>=', $fecha_fin);
             });
-        })
-        ->when($filters['only_inactive'] ?? null, function($query) {
-            $query->onlyTrashed();
-            // $query->withTrashed();
-        })
-        ->when($filters['nombre'] ?? null, function($query, $nombre) {
-            $query->where('fullname', 'like', '%'.$nombre.'%');
-        })
-        ->when($filters['fecha_inicio'] ?? null, function($query, $fecha_inicio) {
-            $query->where('created_at', '>=', $fecha_inicio);
-        })
-        ->when($filters['fecha_fin'] ?? null, function($query, $fecha_fin) {
-            $query->where('created_at', '>=', $fecha_fin);
-        });
 
         $query->orderBy('id', 'desc');
     }

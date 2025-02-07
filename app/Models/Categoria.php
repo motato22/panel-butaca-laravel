@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Categoria extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The table associated with the model.
@@ -28,15 +29,29 @@ class Categoria extends Model
      *
      * @var array
      */
-    protected $hidden = [
-    ];
+    protected $hidden = [];
 
     /**
-     * Get the news related to the record
-     *
+     * Get the related generos.
      */
     public function generos()
     {
         return $this->hasMany(Genero::class, 'categoria_id', 'id');
+    }
+
+    /**
+     * Accessor for thumbnail URL.
+     */
+    public function getThumbnailUrlAttribute()
+    {
+        return $this->thumbnail ? asset('storage/' . $this->thumbnail) : null;
+    }
+
+    /**
+     * Mutator for setting background color.
+     */
+    public function setBackgroundAttribute($value)
+    {
+        $this->attributes['background'] = strtolower($value);
     }
 }

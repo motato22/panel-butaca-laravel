@@ -37,61 +37,71 @@
                             </thead>
                             <tbody>
                                 @foreach($categorias as $categoria)
-                                    <tr>
-                                        <td>{{$categoria->nombre}}</td>
-                                        <td style="max-width: 50%">
-                                            
-                                                @foreach($categoria->generos as $genero)
-                                                    <div class="btn ml-2 my-2 badge badge-soft-dark">
-                                                        {{$genero->nombre}}
-                                                        <a  class="editar-genero text-primary ml-2">
-                                                            <i class="icon-placeholder mdi mdi-pencil-box-outline"></i>
-                                                        </a>
-                                                        <a href="javascript:void(0)" class="delete-genero text-danger"></a>
-                                                           
-                                                            <i class="icon-placeholder mdi mdi-minus-box-outline"></i>
-                                                        </a>
-                                                    </div>
-                                                @endforeach
-                                         
-                                           
-                                            <div class="collapse">
-                                               
-                                                
-                                                        <div class="btn ml-2 my-2 badge badge-soft-dark">
-                                                            
-                                                            <a class="editar-genero text-primary ml-2"></a>
-                                                               
-                                                                <i class="icon-placeholder mdi mdi-pencil-box-outline"></i>
-                                                            </a>
-                                                            <a href="javascript:void(0)" class="delete-genero text-danger">
-                                                                <i class="icon-placeholder mdi mdi-minus-box-outline"></i>
-                                                            </a>
-                                                        </div>
-                                           
-                                            
-                                            </div>
-                                           
-                                                <a   class="btn py-0 btn-sm btn-outline-primary ml-2 collapsed">
-                                                    ...
+                                <tr>
+                                    <td>{{$categoria->nombre}}</td>
+                                    <td style="max-width: 50%">
+
+                                        @foreach($categoria->generos as $genero)
+                                        <div class="btn ml-2 my-2 badge badge-soft-dark">
+                                            {{$genero->nombre}}
+                                            <a class="editar-genero text-primary ml-2">
+                                                <i class="icon-placeholder mdi mdi-pencil-box-outline"></i>
+                                            </a>
+                                            <a href="javascript:void(0)" class="delete-genero text-danger"></a>
+
+                                            <i class="icon-placeholder mdi mdi-minus-box-outline"></i>
+                                            </a>
+                                        </div>
+                                        @endforeach
+
+
+                                        <div class="collapse">
+
+
+                                            <div class="btn ml-2 my-2 badge badge-soft-dark">
+
+                                                <a class="editar-genero text-primary ml-2"></a>
+
+                                                <i class="icon-placeholder mdi mdi-pencil-box-outline"></i>
                                                 </a>
-                                            
-                                        </td>
-                                        <td>
-                                            {{$categoria->updated_at->format('d/m/Y')}}
-                                        </td>
-                                        <td>
-                                            <a data-toggle="modal" >
-                                                <i class="mdi mdi-plus mdi-18px"></i>
-                                            </a>
-                                            <a href="/categorias/{{$categoria->id}}/edit" class="btn btn-sm m-b-15 ml-1 btn-primary py-0 px-1">
-                                                <i class="mdi mdi-pencil mdi-18px"></i>
-                                            </a>
-                                            <a href="/categorias/{{$categoria->id}}/delete" class="btn btn-sm ml-1 m-b-15 btn-danger py-0 px-1 action-delete">
+                                                <a href="javascript:void(0)" class="delete-genero text-danger">
+                                                    <i class="icon-placeholder mdi mdi-minus-box-outline"></i>
+                                                </a>
+                                            </div>
+
+
+                                        </div>
+
+                                        <a class="btn py-0 btn-sm btn-outline-primary ml-2 collapsed">
+                                            ...
+                                        </a>
+
+                                    </td>
+                                    <td>
+                                        {{$categoria->updated_at->format('d/m/Y')}}
+                                    </td>
+                                    <td>
+                                        <!-- Botón para agregar géneros (modal o acción) -->
+                                        <a data-toggle="modal">
+                                            <i class="mdi mdi-plus mdi-18px"></i>
+                                        </a>
+
+                                        <!-- Botón para editar la categoría -->
+                                        <a href="/categorias/{{$categoria->id}}/edit" class="btn btn-sm m-b-15 ml-1 btn-primary py-0 px-1">
+                                            <i class="mdi mdi-pencil mdi-18px"></i>
+                                        </a>
+
+                                        <!-- Botón para eliminar la categoría -->
+                                        <form action="{{ route('categorias.delete', $categoria->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta categoría?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm ml-1 m-b-15 btn-danger py-0 px-1 action-delete">
                                                 <i class="mdi mdi-tag-minus mdi-18px"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
+                                            </button>
+                                        </form>
+                                    </td>
+
+                                </tr>
                                 @endforeach
                             </tbody>
                         </table>

@@ -91,8 +91,8 @@
             @endif
 
             @if( auth()->user()->role == 'ROLE_ADMIN' )
-            <li class="menu-item {{ in_array($menu, ['Propiedades']) ? 'active opened' : ''}}">
-                <a href="{{url('propiedades')}}" class="menu-link">
+            <li class="menu-item {{ in_array($menu, ['Recintos']) ? 'active opened' : ''}}">
+                <a href="{{url('recintos')}}" class="menu-link">
                     <span class="menu-label">
                         <span class="menu-name">Recintos</span>
                     </span>
@@ -278,6 +278,7 @@
     var baseUrl = "{{url('')}}";
     var current_user_id = $('meta[name=user-id]').attr('content');
 </script>
+@yield('scripts')
 </body>
 </html>
 

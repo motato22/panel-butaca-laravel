@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CategoriasController;
-use App\Http\Controllers\FaqsController;
+use App\Http\Controllers\RecintosController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\LoginController;
@@ -39,7 +39,9 @@ Route::get('login', function () {
 })->name('login');
 
 // Reset account
-Route::get('reset-preview', function () { return view('mails.reset_password'); });
+Route::get('reset-preview', function () {
+    return view('mails.reset_password');
+});
 
 // Login
 Route::post('login', [LoginController::class, 'index'])->name('login');
@@ -51,22 +53,19 @@ Route::get('logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('recuperar-cuenta', [LoginController::class, 'resetView'])->name('resetView');
 Route::post('recuperar-cuenta', [LoginController::class, 'resetPassword'])->name('resetPassword');
 
-// Vista de términos y condiciones
-Route::get('terminos-y-condiciones', [ApiController::class, 'showTermsAndConditions'])->name('showTermsAndConditions');
-Route::get('aviso-de-privacidad', [ApiController::class, 'showNoticePrivacy'])->name('showNoticePrivacy');
 
 // You must be logged in to access
 Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::prefix('dashboard')->group(function () {
-        Route::get('/',[LoginController::class, 'loadDashboard'])->name('dashboard');
+        Route::get('/', [LoginController::class, 'loadDashboard'])->name('dashboard');
     });
 
     // Usuarios
 
     Route::prefix('users')->group(function () {
         Route::get('/', [UsersController::class, 'index'])->name('users.index');
-        Route::get('/create',[UsersController::class,'create'])->name('users.create');
+        Route::get('/create', [UsersController::class, 'create'])->name('users.create');
         Route::get('/{id}/edit', [UsersController::class, 'edit'])->name('users.edit');
         Route::post('/{id}/update', [UsersController::class, 'update'])->name('users.update');
         Route::post('add', [UsersController::class, 'add'])->name('users.add');
@@ -74,29 +73,43 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('users', UsersController::class)->except(['destroy']);
         Route::post('/notification/send', [UsersController::class, 'sendNotification'])->name('users.sendNotification');
         Route::post('/notification/bulk-send', [UsersController::class, 'sendBulkNotification'])->name('users.sendBulkNotification');
-        Route::post('/notificaciones/enviar', [NotificacionesController::class, 'enviar'])->name('notificaciones.enviar');
+        // Route::post('/notificaciones/enviar', [NotificacionesController::class, 'enviar'])->name('notificaciones.enviar');
         Route::delete('/{id}', [UsersController::class, 'delete'])->name('users.destroy');
     });
 
     // Categorias
-
-    Route::prefix('categorias')->group(function() {
-        Route::get('/', [CategoriasController::class, 'index'])->name('categorias.index');
-        Route::get('/create', [CategoriasController::class, 'create'])->name('categorias.create');
-        Route::get('/{id}/edit', [CategoriasController::class, 'edit'])->name('categorias.edit');
-        Route::get('/{id}/delete', [CategoriasController::class, 'delete'])->name('categorias.delete');
-        Route::post('/{id}/update', [CategoriasController::class, 'update'])->name('categorias.update');
-        Route::post('/add', [CategoriasController::class, 'add'])->name('categorias.add');
+    Route::prefix('categorias')->group(function () {
+        Route::get('/', [CategoriasController::class, 'index'])->name('categorias.index'); // Listar categorías
+        Route::get('/create', [CategoriasController::class, 'create'])->name('categorias.create'); // Formulario de creación
+        Route::post('/add', [CategoriasController::class, 'add'])->name('categorias.add'); // Crear categoría
+        Route::get('/{id}/edit', [CategoriasController::class, 'edit'])->name('categorias.edit'); // Formulario de edición
+        Route::put('/{id}/update', [CategoriasController::class, 'update'])->name('categorias.update'); // Actualizar categoría
+        Route::delete('/{id}/delete', [CategoriasController::class, 'delete'])->name('categorias.delete'); // Eliminar categoría
     });
+
 
     // Recintos
 
-    Route::prefix('recintos')->group(function(){
+    Route::prefix('recintos')->group(function () {
+        // Listar recintos
         Route::get('/', [RecintosController::class, 'index'])->name('recintos.index');
+
+        // Formulario para crear un nuevo recinto
         Route::get('/create', [RecintosController::class, 'create'])->name('recintos.create');
 
+        // Guardar un nuevo recinto
+        Route::post('/add', [RecintosController::class, 'store'])->name('recintos.add');
 
+        // Formulario para editar un recinto existente
+        Route::get('/{id}/edit', [RecintosController::class, 'edit'])->name('recintos.edit');
+
+        // Actualizar un recinto existente
+        Route::put('/{id}/update', [RecintosController::class, 'update'])->name('recintos.update');
+
+        // Eliminar un recinto existente
+        Route::delete('/{id}/delete', [RecintosController::class, 'destroy'])->name('recintos.delete');
     });
+
 
     // Route::prefix('usuarios')->group(function () {
     //     Route::get('/nuevo-usuario', [UserController::class, 'create'])->name('nuevo_usuario');
@@ -238,5 +251,5 @@ Route::middleware(['auth'])->group(function () {
     //         Route::post('delete',[SupportFaqsController::class, 'delete'])->name('faqs.delete');
     //     });
     // });
-// });
+    // });
 });

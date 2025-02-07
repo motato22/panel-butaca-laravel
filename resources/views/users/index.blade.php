@@ -103,22 +103,21 @@
                             <i class="mdi mdi-send mdi-18px"></i>
                         </a>
                     </div>
+                    @foreach ((array) session('error', []) as $message)
+    <div class="col-12">
+        <div class="alert alert-danger" style="margin-left: auto; margin-right: auto">
+            <p class="m-0 text-center"><b>Error</b>:  {{ $message }}</p>
+        </div>
+    </div>
+@endforeach
 
-                    @foreach (session('error', []) as $message)
-                        <div class="col-12">
-                            <div class="alert alert-danger" style="margin-left: auto; margin-right: auto">
-                                <p class="m-0 text-center"><b>Error</b>:  {{ $message }}</p>
-                            </div>
-                        </div>
-                    @endforeach
-
-                    @foreach (session('success', []) as $message)
-                        <div class="col-12">
-                            <div class="alert alert-success" style="margin-left: auto; margin-right: auto">
-                                <p class="m-0 text-center"><b>Enhorabuena</b>:  {{ $message }}</p>
-                            </div>
-                        </div>
-                    @endforeach
+@foreach ((array) session('success', []) as $message)
+    <div class="col-12">
+        <div class="alert alert-success" style="margin-left: auto; margin-right: auto">
+            <p class="m-0 text-center"><b>Enhorabuena</b>:  {{ $message }}</p>
+        </div>
+    </div>
+@endforeach
 
                     <h3 class="py-3">Usuarios Administradores</h3>
 
@@ -155,6 +154,36 @@
                     <hr/>
 
                     <h3 class="py-3">Usuarios Apps</h3>
+                    
+                    <div class="table-responsive p-t-10">
+                        <!-- Formulario de búsqueda y ordenación -->
+                        <form method="GET" action="{{ route('users.index') }}" class="mb-4">
+                            <div class="row">
+                                <!-- Campo de búsqueda -->
+                                <div class="col-md-6">
+                                    <input 
+                                        type="text" 
+                                        name="search" 
+                                        class="form-control" 
+                                        placeholder="Buscar por nombre o correo" 
+                                        value="{{ request('search') }}">
+                                </div>
+
+                                <!-- Opciones de ordenación -->
+                                <div class="col-md-4">
+                                    <select name="order_by" class="form-control">
+                                        <option value="nombre" {{ request('order_by') == 'nombre' ? 'selected' : '' }}>Ordenar por Nombre</option>
+                                        <option value="correo" {{ request('order_by') == 'correo' ? 'selected' : '' }}>Ordenar por Correo</option>
+                                        <option value="created_at" {{ request('order_by') == 'created_at' ? 'selected' : '' }}>Ordenar por Fecha</option>
+                                    </select>
+                                </div>
+
+                                <!-- Botón de búsqueda -->
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary btn-block">Buscar</button>
+                                </div>
+                            </div>
+                        </form>
 
                     <div class="table-responsive p-t-10">
                         <table class="table default-table nowrap" style="width:100%">
@@ -182,7 +211,7 @@
                             </tbody>
                         </table>
                         <div class="d-flex justify-content-end mt-6">
-                            {{ $usuariosApp->links() }}
+                        {{ $usuariosApp->links('pagination::bootstrap-4') }}
                         </div>
                     </div>
 
@@ -196,7 +225,7 @@
                                         <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
-                                <form id="formEnviarNotificaciones" method="POST" action="{{ route('notificaciones.enviar') }}">
+                                <form id="" method="POST" action="">
                                     @csrf
                                     <div class="modal-body">
                                         <div class="form-group">
