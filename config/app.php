@@ -213,4 +213,6 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 
+    'log_level' => env('LOG_LEVEL', 'error'),
+
 ];

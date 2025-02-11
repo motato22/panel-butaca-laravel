@@ -24,17 +24,23 @@ class RecintosController extends Controller
 
         $zonas = Zona::all();
 
-        return view('recintos.create', compact('menu', 'title','zonas'));
+        return view('recintos.create', compact('menu', 'title', 'zonas'));
     }
 
     public function store(Request $request)
     {
+        // Asegurar que 'promocion' tenga un valor (0 o 1)
+        $request->merge([
+            'promocion' => $request->has('promocion') ? 1 : 0,
+        ]);
+
+        // Validar los datos
         $validated = $request->validate([
             'zona_id' => 'nullable|exists:zona_recinto,id',
             'nombre' => 'required|string|max:190',
             'foto' => 'nullable|image|max:2048',
             'contacto' => 'nullable|string|max:190',
-            'web' => 'nullable|url',
+            'web' => 'nullable|sometimes|url',
             'horario_inicio' => 'nullable|string|max:190',
             'horario_fin' => 'nullable|string|max:190',
             'capacidad' => 'nullable|string|max:190',
@@ -52,10 +58,15 @@ class RecintosController extends Controller
             'telefono' => 'nullable|string|max:190',
         ]);
 
+        // 🚀 Depuración: Verificar los datos antes de guardar
+        // dd($validated);
+
+        // Guardar la imagen si fue subida
         if ($request->hasFile('foto')) {
             $validated['foto'] = $request->file('foto')->store('recintos', 'public');
         }
 
+        // Insertar en la base de datos
         Recinto::create($validated);
 
         return redirect()->route('recintos.index')->with('success', 'Recinto creado exitosamente.');

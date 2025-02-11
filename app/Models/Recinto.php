@@ -12,13 +12,32 @@ class Recinto extends Model
     protected $table = 'recinto';
 
     protected $fillable = [
-        'zona_id', 'nombre', 'foto', 'contacto', 'web', 'horario_inicio', 'horario_fin', 
-        'capacidad', 'facebook', 'instagram', 'twitter', 'youtube', 'amenidades', 
-        'descripcion', 'video', 'promocion', 'lat', 'lng', 'direccion', 'telefono'
+        'zona_id',
+        'nombre',
+        'foto',
+        'contacto',
+        'web',
+        'horario_inicio',
+        'horario_fin',
+        'capacidad',
+        'facebook',
+        'instagram',
+        'twitter',
+        'youtube',
+        'amenidades',
+        'descripcion',
+        'video',
+        'promocion',
+        'lat',
+        'lng',
+        'direccion',
+        'telefono'
     ];
 
     public function zona()
     {
         return $this->belongsTo(Zona::class, 'zona_id');
     }
+
+    public $timestamps = false;
 }

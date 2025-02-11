@@ -19,16 +19,26 @@
 <div class="container pull-up pb-5 mb-5">
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('recintos.add') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('recintos.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
+
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 <!-- Imagen principal -->
                 <div class="form-row">
                     <div class="col-md-8 mx-auto text-center">
                         <label for="imagen_principal" class="form-label">Imagen principal</label>
                         <div class="custom-file">
-                            <input type="file" id="imagen_principal" name="imagen_principal" class="custom-file-input">
-                            <label class="custom-file-label" for="imagen_principal">Seleccionar archivo</label>
+                            <input type="file" id="foto" name="foto" class="custom-file-input">
+                            <label class="custom-file-label" for="foto">Seleccionar archivo</label>
                         </div>
                         <small class="form-text text-muted">Imagen cuadrada (recomendado: 512 x 512).</small>
                     </div>
@@ -49,6 +59,9 @@
                 <div class="form-group">
                     <label for="nombre" class="required">Nombre del Recinto *</label>
                     <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Nombre del recinto" required>
+                    @error('nombre')
+                        <div class="alert alert-danger">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <!-- Información de contacto -->

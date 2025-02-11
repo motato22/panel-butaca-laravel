@@ -91,22 +91,11 @@ Route::middleware(['auth'])->group(function () {
     // Recintos
 
     Route::prefix('recintos')->group(function () {
-        // Listar recintos
         Route::get('/', [RecintosController::class, 'index'])->name('recintos.index');
-
-        // Formulario para crear un nuevo recinto
         Route::get('/create', [RecintosController::class, 'create'])->name('recintos.create');
-
-        // Guardar un nuevo recinto
-        Route::post('/add', [RecintosController::class, 'store'])->name('recintos.add');
-
-        // Formulario para editar un recinto existente
+        Route::post('/store', [RecintosController::class, 'store'])->name('recintos.store');
         Route::get('/{id}/edit', [RecintosController::class, 'edit'])->name('recintos.edit');
-
-        // Actualizar un recinto existente
         Route::put('/{id}/update', [RecintosController::class, 'update'])->name('recintos.update');
-
-        // Eliminar un recinto existente
         Route::delete('/{id}/delete', [RecintosController::class, 'destroy'])->name('recintos.delete');
     });
 
