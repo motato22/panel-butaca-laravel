@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CategoriasController;
 use App\Http\Controllers\RecintosController;
-use App\Http\Controllers\NewsController;
+use App\Http\Controllers\EventosController;
 use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AwardsController;
@@ -94,10 +94,51 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [RecintosController::class, 'index'])->name('recintos.index');
         Route::get('/create', [RecintosController::class, 'create'])->name('recintos.create');
         Route::post('/store', [RecintosController::class, 'store'])->name('recintos.store');
-        Route::get('/{id}/edit', [RecintosController::class, 'edit'])->name('recintos.edit');
-        Route::put('/{id}/update', [RecintosController::class, 'update'])->name('recintos.update');
-        Route::delete('/{id}/delete', [RecintosController::class, 'destroy'])->name('recintos.delete');
+        Route::get('/{recinto}/edit', [RecintosController::class, 'edit'])->name('recintos.edit');
+        Route::put('/{recinto}', [RecintosController::class, 'update'])->name('recintos.update');
+        Route::delete('/{recinto}', [RecintosController::class, 'destroy'])->name('recintos.delete');
+
+        // Gestión de usuarios de un recinto
+        Route::get('{recinto}/addUsers', [RecintosController::class, 'addUsers'])->name('recintos.addUsers');
+        Route::post('{recinto}/addUsers', [RecintosController::class, 'storeUser'])->name('recintos.storeUser');
+        Route::delete('{recinto}/removeUser/{user}', [RecintosController::class, 'removeUser'])->name('recintos.removeUser');
+
+        // Gestión de imágenes del recinto
+        Route::get('/{recinto}/galeria', [RecintosController::class, 'addImages'])->name('recintos.addImages');
+        Route::post('/{recinto}/galeria/agregar', [RecintosController::class, 'storeImages'])->name('recintos.storeImages');
+        Route::delete('recintos/{recinto}/galeria/{imagen}', [RecintosController::class, 'deleteImage'])
+            ->where('imagen', '[0-9]+')
+            ->name('recintos.deleteImage');
     });
+
+    Route::prefix('eventos')->group(function () {
+        Route::get('/', [EventosController::class, 'index'])->name('eventos.index'); // Listar eventos
+        Route::get('/nuevo', [EventosController::class, 'create'])->name('eventos.create'); // Formulario de nuevo evento
+        Route::post('/store', [EventosController::class, 'store'])->name('eventos.store'); // Guardar evento
+        Route::get('/{evento}/edit', [EventosController::class, 'edit'])->name('eventos.edit'); // Editar evento
+        Route::put('/{evento}', [EventosController::class, 'update'])->name('eventos.update'); // Actualizar evento
+        Route::delete('/{evento}', [EventosController::class, 'destroy'])->name('eventos.destroy'); // Eliminar evento
+
+        // Gestión de géneros asociados a un evento
+        Route::get('{evento}/addGeneros', [EventosController::class, 'addGeneros'])->name('eventos.addGeneros');
+        Route::delete('{evento}/{genero}/delGeneros', [EventosController::class, 'delGeneros'])->name('eventos.delGeneros');
+
+        // Gestión de imágenes del evento
+        Route::get('{evento}/galeria', [EventosController::class, 'addImages'])->name('eventos.addImages');
+        Route::post('{evento}/galeria/agregar', [EventosController::class, 'storeImages'])->name('eventos.storeImages');
+        Route::delete('galeria/{imagen}', [EventosController::class, 'deleteImage'])->name('eventos.deleteImage');
+
+        // Duplicar evento
+        Route::post('{evento}/duplicar', [EventosController::class, 'duplicateEvent'])->name('eventos.duplicar');
+
+        // Horarios
+        Route::post('/horario/agregar', [EventosController::class, 'agregarHorario'])->name('eventos.horario.agregar');
+        Route::delete('{evento}/horario/{index}/remover', [EventosController::class, 'removerHorarioPorIndice'])->name('eventos.horario.remover');
+
+        // Activación recomendada
+        Route::get('{evento}/recomendado/toggle', [EventosController::class, 'toggleActivacion'])->name('eventos.toggleActivacion');
+    });
+
 
 
     // Route::prefix('usuarios')->group(function () {

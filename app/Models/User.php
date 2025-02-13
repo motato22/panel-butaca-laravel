@@ -30,8 +30,11 @@ class User extends Authenticatable
         'username',
         'correo',
         'password',
+        'provider_id',
+        'provider_uid',
         'role',
         'activo',
+        'no_push',
         'fecha_nacimiento',
         'genero',
         'recovery_date',
@@ -40,9 +43,9 @@ class User extends Authenticatable
         'foto',
         'foto_url',
         'fcm_token',
+        'codigo_ude_g',
+        'nip',
         'segmento',
-        'estado',
-        'ciudad',
     ];
 
     /**
@@ -53,6 +56,14 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'activo' => 'boolean',
+        'no_push' => 'boolean',
+        'cuenta_verificada' => 'boolean',
+        'recovery_date' => 'datetime',
     ];
 
     /**
@@ -168,5 +179,21 @@ class User extends Authenticatable
             });
 
         $query->orderBy('id', 'desc');
+    }
+
+    public function recintos()
+    {
+        return $this->belongsToMany(Recinto::class, 'usuario_recinto', 'user_id', 'recinto_id');
+    }
+
+    /**
+     * Verifica si el usuario tiene un rol específico.
+     *
+     * @param string $role
+     * @return bool
+     */
+    public function hasRole($role)
+    {
+        return $this->role === $role;
     }
 }

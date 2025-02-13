@@ -10,6 +10,8 @@ class Recinto extends Model
     use HasFactory;
 
     protected $table = 'recinto';
+    protected $primaryKey = 'id';
+    // public $timestamps = false;
 
     protected $fillable = [
         'zona_id',
@@ -40,4 +42,20 @@ class Recinto extends Model
     }
 
     public $timestamps = false;
+
+    /**
+     * Relación con el modelo GaleriaRecinto.
+     */
+    public function galeria()
+    {
+        return $this->hasMany(GaleriaRecinto::class, 'recinto');
+    }
+
+    /**
+     * Relación con el modelo User.
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'usuario_recinto', 'recinto_id', 'usuario_id');
+    }
 }

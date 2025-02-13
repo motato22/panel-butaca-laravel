@@ -68,22 +68,27 @@
                                                     title="Editar">
                                                     <i class="mdi mdi-pencil me-2"></i>
                                                 </a>
-                                                <a href="{{ url('recintos/' . $recinto->id . '/delete') }}"
-                                                    class="btn btn-danger btn-sm"
-                                                    title="Eliminar"
-                                                    onclick="return confirm('¿Estás seguro de eliminar este recinto?')">
-                                                    <i class="mdi mdi-minus me-2"></i>
-                                                </a>
+                                                <form action="{{ route('recintos.delete', $recinto) }}" method="POST" style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar"
+                                                        onclick="return confirm('¿Estás seguro de eliminar este recinto?')">
+                                                        <i class="mdi mdi-minus me-2"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                             <div>
-                                                <a href="#"
+                                                <!-- Botón para Agregar Usuarios -->
+                                                <a href="{{ url('recintos/' . $recinto->id . '/addUsers') }}"
                                                     class="btn btn-warning btn-sm"
-                                                    title="Ver detalles">
+                                                    title="Agregar Usuario">
                                                     <i class="mdi mdi-account-group me-2"></i>
                                                 </a>
-                                                <a href="#"
+
+                                                <!-- Botón para Agregar Imágenes -->
+                                                <a href="{{ route('recintos.addImages', $recinto->id) }}"
                                                     class="btn btn-info btn-sm"
-                                                    title="Configurar">
+                                                    title="Agregar Imagen">
                                                     <i class="mdi mdi-image-plus me-2"></i>
                                                 </a>
                                             </div>
@@ -94,6 +99,8 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Enlaces de paginación -->
                     <div class="d-flex justify-content-end mt-4">
                         {{ $recintos->links('pagination::bootstrap-4') }}
                     </div>
