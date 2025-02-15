@@ -56,7 +56,9 @@
                                 <tr class="text-center">
                                     <td>{{ $evento->id }}</td>
                                     <td>{{ $evento->nombre }}</td>
-                                    <td>{{ $evento->recinto ? $evento->recinto->nombre : 'Sin recinto' }}</td>
+                                    <td>
+                                        {{ is_object($evento->recinto) ? $evento->recinto->nombre : (is_array($evento->recinto) ? $evento->recinto['nombre'] : '') }}
+                                    </td>
                                     <td>{{ $evento->fecha_inicio }}</td>
                                     <td>{{ $evento->fecha_fin }}</td>
                                     <td>
@@ -64,7 +66,7 @@
                                             Datos mínimos completos.
                                         </div>
                                     </td>
-                                    
+
                                     <td>
                                         <a href="{{ route('eventos.edit', $evento->id) }}" class="btn btn-sm btn-primary py-0 px-1">
                                             <i class="mdi mdi-calendar-edit mdi-18px"></i>

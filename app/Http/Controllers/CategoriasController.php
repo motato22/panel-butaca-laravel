@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categoria;
+use App\Models\Genero;
 
 use Illuminate\Http\Request;
 
@@ -43,15 +44,28 @@ class CategoriasController extends Controller
 
     public function add(Request $request)
     {
-
         $categoria = new Categoria;
-
         $categoria->nombre = $request->nombre;
         $categoria->background = $request->background;
         $categoria->save();
 
-        return redirect()->route('categorias.index')->with('sucess', 'Categorias created Succesfully.');
+        // Guardar los géneros asociados a la categoría
+        if ($request->has('generos')) {
+            $generos = json_decode($request->generos, true);
+            if (!empty($generos)) {
+                foreach ($generos as $gen) {
+                    Genero::create([
+                        'categoria_id' => $categoria->id,
+                        'nombre' => $gen['nombre'],
+                        'color' => $gen['color']
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->route('categorias.index')->with('success', 'Categoría creada correctamente.');
     }
+
 
     public function update(Request $request, $id)
     {

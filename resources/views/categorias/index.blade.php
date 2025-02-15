@@ -81,24 +81,28 @@
                                         {{$categoria->updated_at->format('d/m/Y')}}
                                     </td>
                                     <td>
-                                        <!-- Botón para agregar géneros (modal o acción) -->
-                                        <a data-toggle="modal">
-                                            <i class="mdi mdi-plus mdi-18px"></i>
-                                        </a>
 
-                                        <!-- Botón para editar la categoría -->
-                                        <a href="/categorias/{{$categoria->id}}/edit" class="btn btn-sm m-b-15 ml-1 btn-primary py-0 px-1">
-                                            <i class="mdi mdi-pencil mdi-18px"></i>
-                                        </a>
+                                        <div class="d-flex flex-column align-items-start">
 
-                                        <!-- Botón para eliminar la categoría -->
-                                        <form action="{{ route('categorias.delete', $categoria->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta categoría?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm ml-1 m-b-15 btn-danger py-0 px-1 action-delete">
-                                                <i class="mdi mdi-tag-minus mdi-18px"></i>
-                                            </button>
-                                        </form>
+                                            
+                                            <div class="mb-2">
+                                                <!-- Botón para editar la categoría -->
+                                                <a href="/categorias/{{$categoria->id}}/edit" class="btn btn-sm m-b-15 ml-1 btn-primary py-0 px-1">
+                                                    <i class="mdi mdi-pencil mdi-18px"></i>
+                                                </a>
+
+
+                                                <!-- Botón para eliminar la categoría -->
+                                                <form action="{{ route('categorias.delete', $categoria->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta categoría?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm ml-1 m-b-15 btn-danger py-0 px-1 action-delete">
+                                                        <i class="mdi mdi-tag-minus mdi-18px"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                           
+                                        </div>
                                     </td>
 
                                 </tr>

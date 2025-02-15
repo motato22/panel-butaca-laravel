@@ -49,7 +49,7 @@
                     <form action="{{ route('eventos.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
-                        <button type="submit" onclick="return false;" style="display:none;"></button>
+                        <!-- <button type="submit" style="display:none;"></button> -->
 
                         <div class="form-row">
                             <div class="col-12 col-md-8 col-lg-6 text-center offset-md-2 offset-lg-3">
@@ -97,19 +97,20 @@
                             </div>
                         </div>
 
+                        <!-- SELECCIÓN DE HORARIO -->
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label for="fecha_inicio">Fecha de inicio<span style="color: red;">*</span></label>
-                                <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" value="{{ old('fecha_inicio') }}">
-                                <small class="form-text text-muted">¿Cuándo comenzará el evento en el recinto configurado?</small>
-                            </div>
-
-                            <div class="form-group col-md-6">
-                                <label for="fecha_fin">Fecha de fin<span style="color: red;">*</span></label>
-                                <input type="date" id="fecha_fin" name="fecha_fin" class="form-control" value="{{ old('fecha_fin') }}">
-                                <small class="form-text text-muted">¿Cuándo finalizará el evento en el recinto configurado?</small>
+                                <label>Tipo de Horario <span style="color: red;">*</span></label>
+                                <select id="tipo_horario" name="tipo_horario" class="form-control">
+                                    <option value="temporada">Temporada (varios días con horarios iguales)</option>
+                                    <option value="funciones">Funciones (varios días con uno o varios horarios)</option>
+                                    <option value="unico_dia">Único día (un solo día con un solo horario)</option>
+                                </select>
                             </div>
                         </div>
+
+                        <!-- CONTENEDOR PARA HORARIOS -->
+                        <div id="contenedor_horarios"></div>
 
                         <hr />
 
@@ -236,8 +237,206 @@
     </div>
 </div>
 
-@endsection
 
-@section('javascripts')
-<script src="{{ asset('js/dropzone.js') }}"></script>
+<script>
+    let horarios = {};
+
+    document.getElementById("tipo_horario").addEventListener("change", function() {
+        let tipo = this.value;
+        let contenedor = document.getElementById("contenedor_horarios");
+        contenedor.innerHTML = "";
+
+        if (tipo === "temporada") {
+            contenedor.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Fecha de inicio <span style="color: red;">*</span></label>
+                        <input type="date" name="fecha_inicio_temporada" class="form-control">
+                        <small class="form-text text-muted text-right">Fecha de Inicio de la Temporada</small>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Fecha de fin<span style="color: red;">*</span></label>
+                        <input type="date" name="fecha_fin_temporada" class="form-control">
+                        <small class="form-text text-muted text-right">Fecha de Término de la Temporada</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Días con actividad<span style="color: red;">*</span></label>
+                    <div>
+                        ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(dia =>
+                            `<label><input type="checkbox" name="dias_temporada[]" value="${dia}"> ${dia}</label> | `
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-2">
+                        <label>Horario de Inicio<span style="color: red;">*</span></label>
+                        <input type="time" name="horario_temporada_inicio" class="form-control">
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Horario de Término<span style="color: red;">*</span></label>
+                        <input type="time" name="horario_temporada_fin" class="form-control">
+                    </div>
+                </div>
+            `;
+        } else if (tipo === "funciones") {
+            contenedor.innerHTML = `
+                <div id="lista_funciones" class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Horarios<span style="color: red;">*</span></label>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <input type="date" id="fecha_funcion" class="form-control mr-2">
+                                <small class="form-text text-muted text-right">Fecha de la Función</small>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <input type="time" id="hora_funcion" class="form-control mr-2">
+                                <small class="form-text text-muted text-right">Horario de Inicio</small>
+                            </div>
+                            <div class="form-group col-md-1">
+                                <button type="button" class="btn btn-primary" id="btnAgregarFuncion">+</button>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Contenedor donde se mostrarán las funciones agregadas -->
+                    <div class="form-group col-md-6">
+                        <div id="lista_horarios">
+                            <h5>Lista de horarios</h5>
+                        </div>
+                    </div>
+                    </div>
+                    <!-- Input oculto para enviar los horarios en el formulario -->
+                    <input type="hidden" name="horarios" id="horarios_json">
+                </div>
+            `;
+        } else if (tipo === "unico_dia") {
+            contenedor.innerHTML = `
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Fecha del evento<span style="color: red;">*</span></label>
+                        <input type="date" name="fecha_unico" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-2">
+                        <label>Horario de Inicio<span style="color: red;">*</span></label>
+                        <input type="time" name="horario_temporada_inicio" class="form-control">
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label>Horario de Término<span style="color: red;">*</span></label>
+                        <input type="time" name="horario_temporada_fin" class="form-control">
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    document.addEventListener("click", function(event) {
+        if (event.target && event.target.id === "btnAgregarFuncion") {
+            let fechaInput = document.getElementById("fecha_funcion").value;
+            let hora = document.getElementById("hora_funcion").value;
+
+            if (!fechaInput || !hora) {
+                alert("Selecciona una fecha y una hora.");
+                return;
+            }
+
+            let fecha = new Date(fechaInput + "T24:00:00");
+            let fechaCorregida = fecha.toISOString().split('T')[0];
+
+            if (!horarios[fechaCorregida]) {
+                horarios[fechaCorregida] = [];
+            }
+
+            if (!horarios[fechaCorregida].includes(hora)) {
+                horarios[fechaCorregida].push(hora);
+                renderizarHorarios();
+            }
+        }
+    });
+
+    function eliminarHorario(fecha, hora) {
+        horarios[fecha] = horarios[fecha].filter(h => h !== hora);
+        if (horarios[fecha].length === 0) {
+            delete horarios[fecha];
+        }
+        renderizarHorarios();
+    }
+
+    function eliminarFecha(fecha) {
+        delete horarios[fecha];
+        renderizarHorarios();
+    }
+
+    function renderizarHorarios() {
+    let contenedor = document.getElementById("lista_horarios");
+    if (!contenedor) return;
+
+    contenedor.innerHTML = "<h5>Lista de horarios</h5>";
+
+    Object.keys(horarios).forEach(fecha => {
+        let divFecha = document.createElement("div");
+        divFecha.classList.add("p-3", "mb-2", "shadow-sm", "border", "rounded");
+
+        // Crear un row para distribuir el contenido
+        let rowDiv = document.createElement("div");
+        rowDiv.classList.add("row", "align-items-center");
+
+        // Columna izquierda: Botón de borrar
+        let colBorrar = document.createElement("div");
+        colBorrar.classList.add("col-md-3", "text-left");
+
+        let btnEliminarFecha = document.createElement("button");
+        btnEliminarFecha.classList.add("btn", "btn-danger", "btn-sm", "w-100"); // Hace el botón del ancho de la columna
+        btnEliminarFecha.innerText = "Borrar";
+        btnEliminarFecha.onclick = () => eliminarFecha(fecha);
+
+        colBorrar.appendChild(btnEliminarFecha);
+
+        // Columna derecha: Fecha y horarios
+        let colContenido = document.createElement("div");
+        colContenido.classList.add("col-md-9");
+
+        let titulo = document.createElement("div");
+        titulo.classList.add("font-weight-bold", "mb-2");
+        titulo.innerHTML = `${new Date(fecha).toLocaleDateString("es-ES", { 
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+        })}`;
+
+        let horariosDiv = document.createElement("div");
+        horariosDiv.classList.add("d-flex", "flex-wrap");
+
+        horarios[fecha].forEach(hora => {
+            let badge = document.createElement("span");
+            badge.classList.add("badge", "badge-secondary", "p-2", "m-1", "d-flex", "align-items-center");
+
+            let closeButton = document.createElement("button");
+            closeButton.classList.add("btn", "btn-sm", "btn-light", "ml-1", "p-0");
+            closeButton.innerHTML = "✖";
+            closeButton.onclick = () => eliminarHorario(fecha, hora);
+
+            badge.innerHTML = `${hora} `;
+            badge.appendChild(closeButton);
+
+            horariosDiv.appendChild(badge);
+        });
+
+        colContenido.appendChild(titulo);
+        colContenido.appendChild(horariosDiv);
+
+        // Añadir las columnas al row
+        rowDiv.appendChild(colBorrar);
+        rowDiv.appendChild(colContenido);
+
+        // Añadir el row al divFecha
+        divFecha.appendChild(rowDiv);
+        contenedor.appendChild(divFecha);
+    });
+
+    document.getElementById("horarios_json").value = JSON.stringify(horarios);
+}
+
+</script>
+
 @endsection

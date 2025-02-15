@@ -10,25 +10,25 @@ class Genero extends Model
     use HasFactory;
 
     /**
-     * The table associated with the model.
+     * La tabla asociada al modelo.
      *
      * @var string
      */
     protected $table = 'generos';
 
     /**
-     * The attributes that are mass assignable.
+     * Los atributos que se pueden asignar masivamente.
      *
      * @var array
      */
     protected $fillable = ['categoria_id', 'nombre'];
 
     /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
+     * Relación con la tabla Categorias.
+     * Un género pertenece a una categoría.
      */
-    protected $hidden = [
-    ];
-
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class, 'categoria_id', 'id');
+    }
 }
