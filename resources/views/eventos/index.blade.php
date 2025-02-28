@@ -96,5 +96,24 @@
     </div>
 
 </div>
+@endsection
 
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleccionamos todos los botones que tengan la clase .action-delete
+    const deleteButtons = document.querySelectorAll('.action-delete');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault(); // Evita que el formulario se envíe de inmediato
+
+            if (confirm('¿Estás seguro de eliminar este evento?')) {
+                // Si el usuario confirma, enviamos el formulario que contiene el botón
+                this.closest('form').submit();
+            }
+        });
+    });
+});
+</script>
 @endsection

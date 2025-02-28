@@ -6,7 +6,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CategoriasController;
 use App\Http\Controllers\RecintosController;
 use App\Http\Controllers\EventosController;
-use App\Http\Controllers\BlogsController;
+use App\Http\Controllers\GenerosController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\PrensaController;
@@ -17,6 +17,7 @@ use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\PropertiesController;
 use App\Http\Controllers\SupportFaqsController;
 use App\Http\Controllers\NotificationsPushController;
+use App\Http\Controllers\ZonaRecintoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -87,6 +88,12 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{id}/delete', [CategoriasController::class, 'delete'])->name('categorias.delete'); // Eliminar categoría
     });
 
+    // Rutas para gestión de géneros dentro de categorías
+    Route::prefix('generos')->group(function () {
+        Route::post('/{id}/editar', [GenerosController::class, 'update'])->name('generos.update'); // Editar género
+        Route::delete('/{id}/eliminar', [GenerosController::class, 'delete'])->name('generos.delete'); // Eliminar género
+    });
+
 
     // Recintos
 
@@ -113,11 +120,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('eventos2')->group(function () {
         Route::get('/', [EventosController::class, 'index'])->name('eventos.index');
-        Route::get('/nuevo', [EventosController::class, 'create'])->name('eventos.create'); 
-        Route::post('/store', [EventosController::class, 'store'])->name('eventos.store'); 
-        Route::get('/{evento}/edit', [EventosController::class, 'edit'])->name('eventos.edit'); 
-        Route::put('/{evento}', [EventosController::class, 'update'])->name('eventos.update'); 
-        Route::delete('/{evento}', [EventosController::class, 'destroy'])->name('eventos.destroy'); 
+        Route::get('/nuevo', [EventosController::class, 'create'])->name('eventos.create');
+        Route::post('/store', [EventosController::class, 'store'])->name('eventos.store');
+        Route::get('/{evento}/edit', [EventosController::class, 'edit'])->name('eventos.edit');
+        Route::put('/{evento}', [EventosController::class, 'update'])->name('eventos.update');
+        Route::delete('/{evento}', [EventosController::class, 'destroy'])->name('eventos.destroy');
 
         // Gestión de géneros asociados a un evento
         Route::get('{evento}/addGeneros', [EventosController::class, 'addGeneros'])->name('eventos.addGeneros');
@@ -138,5 +145,23 @@ Route::middleware(['auth'])->group(function () {
         // Activación recomendada
         Route::get('{evento}/recomendado/toggle', [EventosController::class, 'toggleActivacion'])->name('eventos.toggleActivacion');
     });
+
+    // Devuelve los géneros de una categoría en JSON (para el select de géneros)
+    Route::get('/categorias/{categoria}/generos', [CategoriasController::class, 'getGeneros'])
+        ->name('categorias.getGeneros');
+
+    // Asocia un género a un evento (pivote genero_evento)
+    Route::post('/eventos/{evento}/generos', [EventosController::class, 'attachGenero'])
+        ->name('eventos.attachGenero');
+
+    // Elimina un género de un evento
+    Route::delete('/eventos/{evento}/generos/{genero}', [EventosController::class, 'detachGenero'])
+        ->name('eventos.detachGenero');
+
+    //Zonas
+    Route::resource('zonas', ZonaRecintoController::class);
+    // Ruta manual para eliminar:
+    Route::delete('/zonas/{zona}', [ZonaRecintoController::class, 'destroy'])
+         ->name('zonas.destroy');
 
 });

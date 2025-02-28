@@ -9,18 +9,7 @@ class Genero extends Model
 {
     use HasFactory;
 
-    /**
-     * La tabla asociada al modelo.
-     *
-     * @var string
-     */
     protected $table = 'generos';
-
-    /**
-     * Los atributos que se pueden asignar masivamente.
-     *
-     * @var array
-     */
     protected $fillable = ['categoria_id', 'nombre'];
 
     /**
@@ -30,5 +19,13 @@ class Genero extends Model
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'categoria_id', 'id');
+    }
+
+    /**
+     * Relación con Evento (muchos a muchos a través de 'genero_evento').
+     */
+    public function eventos()
+    {
+        return $this->belongsToMany(Evento::class, 'genero_evento', 'genero_id', 'evento_id');
     }
 }

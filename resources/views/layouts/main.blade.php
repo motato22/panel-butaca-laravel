@@ -105,7 +105,7 @@
 
             @if( auth()->user()->role == 'ROLE_ADMIN' )
             <li class="menu-item {{ in_array($menu, ['Eventos']) ? 'active opened' : ''}}">
-                <a href="{{url('eventos')}}" class="menu-link">
+                <a href="{{url('eventos2')}}" class="menu-link">
                     <span class="menu-label">
                         <span class="menu-name">Eventos</span>
                     </span>
@@ -117,8 +117,8 @@
             @endif
 
             @if( auth()->user()->role == 'ROLE_ADMIN' )
-            <li class="menu-item {{ in_array($menu, ['Pagos']) ? 'active opened' : ''}}">
-                <a href="{{url('pagos')}}" class="menu-link">
+            <li class="menu-item {{ in_array($menu, ['Zona_recintos']) ? 'active opened' : ''}}">
+                <a href="{{url('zonas')}}" class="menu-link">
                     <span class="menu-label">
                         <span class="menu-name">Zona Recintos</span>
                     </span>

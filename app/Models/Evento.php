@@ -12,7 +12,7 @@ class Evento extends Model
 
     public $timestamps = false;
 
-    protected $with = ['recinto'];
+    protected $with = ['recintoRelation'];
     protected $table = 'evento';
     protected $fillable = [
         'nombre',
@@ -46,11 +46,10 @@ class Evento extends Model
     /**
      * Relación con Recinto
      */
-    public function recinto()
+    public function recintoRelation()
     {
-        return $this->belongsTo(Recinto::class, 'recinto', 'id')->withDefault([
-            'nombre' => 'Sin recinto'
-        ]);
+        return $this->belongsTo(Recinto::class, 'recinto', 'id')
+            ->withDefault(['nombre' => 'Sin recinto']);
     }
 
     /**
@@ -58,7 +57,12 @@ class Evento extends Model
      */
     public function generos()
     {
-        return $this->belongsToMany(Genero::class, 'genero_evento');
+        return $this->belongsToMany(
+            Genero::class,   // Modelo relacionado
+            'genero_evento', // Nombre de la tabla pivote
+            'evento_id',     // FK local en la pivote
+            'genero_id'      // FK del otro modelo en la pivote
+        );
     }
 
     /**

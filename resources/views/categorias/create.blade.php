@@ -28,6 +28,14 @@
                 @method('PUT')
                 @endif
 
+                {{-- Vista previa de la imagen SOLO cuando se edita --}}
+@if(isset($categoria) && $categoria->thumbnail)
+    <div class="text-center mb-3">
+        <img id="preview" src="{{ asset('storage/' . $categoria->thumbnail) }}" class="img-fluid" style="max-width: 200px; border-radius: 10px;">
+    </div>
+@endif
+
+
                 <div class="d-flex justify-content-center align-items-center mb-5">
                     <div class="form-group custom-file col-md-6">
                         <input
@@ -136,25 +144,6 @@
 </div>
 
 <script>
-    function actualizarColor(id) {
-    let colorPicker = document.getElementById(id + '_color_picker');
-    let textInput = document.getElementById(id);
-
-    if (colorPicker && textInput) {
-        textInput.value = colorPicker.value.toUpperCase();
-    }
-}
-
-// Sincroniza el color picker con el input de texto
-function sincronizarColor(id) {
-    let colorPicker = document.getElementById(id + '_color_picker');
-    let textInput = document.getElementById(id);
-
-    if (colorPicker && textInput) {
-        colorPicker.value = textInput.value;
-    }
-}
-
 function actualizarColor(id) {
     let colorPicker = document.getElementById(id + '_color_picker');
     let textInput = document.getElementById(id);
@@ -164,15 +153,17 @@ function actualizarColor(id) {
     }
 }
 
-// Sincroniza el color picker con el input de texto
-function sincronizarColor(id) {
-    let colorPicker = document.getElementById(id + '_color_picker');
-    let textInput = document.getElementById(id);
-
-    if (colorPicker && textInput) {
-        colorPicker.value = textInput.value;
-    }
+function previewImage(event) {
+    let reader = new FileReader();
+    reader.onload = function () {
+        let preview = document.getElementById('preview');
+        if (preview) {
+            preview.src = reader.result;
+        }
+    };
+    reader.readAsDataURL(event.target.files[0]);
 }
+
 
 // Asegurar que los elementos existen antes de agregar eventos
 document.addEventListener("DOMContentLoaded", function () {

@@ -9,6 +9,7 @@ use App\Models\Evento;
 use App\Models\Recinto;
 use App\Models\Genero;
 use App\Models\GaleriaEvento;
+use App\Models\Categoria;
 
 class EventosController extends Controller
 {
@@ -24,23 +25,36 @@ class EventosController extends Controller
         $query = Evento::query();
 
         if ($searchTerm) {
-            $query->where('nombre', 'LIKE', "%$searchTerm%");
+            $query->where(function ($q) use ($searchTerm) {
+                // buscamos por nombre
+                $q->where('nombre', 'LIKE', "%$searchTerm%")
+
+                    // por recinto
+                    ->orWhereHas('recintoRelation', function ($sub) use ($searchTerm) {
+                        $sub->where('nombre', 'LIKE', "%$searchTerm%");
+                    })
+
+                    // por genero sepa para que si paginamos pero asi quiere el cliente jaja
+                    ->orWhereHas('generos', function ($sub) use ($searchTerm) {
+                        $sub->where('nombre', 'LIKE', "%$searchTerm%");
+                    });
+            });
         }
 
         $menu = 'Eventos';
-        $eventos = Evento::with('recinto')->orderBy($orderColumn, $orderDirection)->paginate(10);
+        $eventos = $query->with('recintoRelation')
+            ->orderBy($orderColumn, $orderDirection)
+            ->paginate(10);
 
+        // Si "recinto" es un int, convertimos; si no, lo dejamos
         $eventos->getCollection()->transform(function ($evento) {
             if (is_numeric($evento->recinto)) {
-                $evento->recinto = Recinto::find($evento->recinto); // Busca el recinto en la BD
+                $evento->recinto = Recinto::find($evento->recinto);
             } elseif (is_array($evento->recinto)) {
-                $evento->recinto = (object) $evento->recinto; // Convierte a objeto
+                $evento->recinto = (object) $evento->recinto;
             }
             return $evento;
         });
-
-        // dd($eventos->toArray());
-        // dd(Evento::with('recinto')->orderBy('id', 'desc')->first()->toArray());
 
         return view('eventos.index', compact('menu', 'eventos', 'searchTerm'));
     }
@@ -65,10 +79,16 @@ class EventosController extends Controller
             'Sin promoción'
         ];
 
+        $evento = new Evento;
         $recintos = Recinto::all();
+        $categorias = Categoria::with('generos')->get();
         $menu = 'Eventos';
 
-        return view('eventos.nuevo', compact('menu', 'recintos', 'promociones'));
+        // Si quieres mostrar géneros en el formulario de “crear”:
+        // $categorias = Categoria::with('generos')->get(); // (solo si vas a agrupar por categorías)
+        // $generos = Genero::all(); // o si prefieres cargar todos
+
+        return view('eventos.nuevo', compact('menu', 'recintos', 'categorias', 'promociones', 'evento'));
     }
 
     /**
@@ -76,9 +96,6 @@ class EventosController extends Controller
      */
     public function store(Request $request)
     {
-        // Depuración: Ver qué datos se reciben
-        // dd($request->all());
-
         $request->validate([
             'nombre' => 'required|string|max:190',
             'recinto' => 'required|exists:recinto,id',
@@ -106,17 +123,18 @@ class EventosController extends Controller
             'es_gratuito' => 'nullable|boolean',
             'recomendado' => 'nullable|boolean',
             'foto' => 'nullable|image|max:2048',
+            'generos' => 'array',
+            'generos.*' => 'exists:generos,id',
         ]);
 
         $evento = new Evento();
-        $evento->fill($request->except(['foto', 'es_gratuito', 'recomendado', 'horario']));
+        $evento->fill($request->except(['foto', 'es_gratuito', 'recomendado', 'horarios', 'generos']));
 
         $evento->recinto = (int) $request->input('recinto');
-
         $evento->es_gratuito = $request->has('es_gratuito') ? 1 : 0;
 
-        // Si es gratuito, precio es 0
-        if ($request->has('es_gratuito')) {
+        // Si es gratuito, forzamos precios a 0
+        if ($evento->es_gratuito) {
             $evento->precio_bajo = '0';
             $evento->precio_alto = '0';
         }
@@ -130,19 +148,15 @@ class EventosController extends Controller
             $evento->foto = null;
         }
 
-        // Manejo de horario
+        // Manejo de horarios (JSON decodificado)
         if ($request->filled('horarios')) {
             $horarios = json_decode($request->input('horarios'), true);
-
             if (json_last_error() === JSON_ERROR_NONE) {
                 $evento->horario = json_encode($horarios);
-
-                // Obtener la fecha más temprana (inicio) y la más tardía (fin)
                 $fechas = array_keys($horarios);
                 sort($fechas);
-
-                $evento->fecha_inicio = $fechas[0]; // Primera fecha en la lista
-                $evento->fecha_fin = end($fechas); // Última fecha en la lista
+                $evento->fecha_inicio = $fechas[0];
+                $evento->fecha_fin = end($fechas);
             } else {
                 return back()->withErrors(['horarios' => 'Error al procesar los horarios.']);
             }
@@ -152,10 +166,11 @@ class EventosController extends Controller
             $evento->fecha_fin = null;
         }
 
-        // dd($evento);
-
-        // Guardamos el evento en la base de datos
+        // Guardamos primero el evento
         $evento->save();
+
+        // Sincronizar géneros en la pivote (genero_evento)
+        $evento->generos()->sync($request->input('generos', []));
 
         return redirect()->route('eventos.index')->with('success', 'Evento creado correctamente.');
     }
@@ -165,22 +180,45 @@ class EventosController extends Controller
      */
     public function edit(Evento $evento)
     {
+        // Decodificamos su horario para mostrarlo en el form
         $evento->horario = json_decode($evento->horario, true) ?? [];
-        return view('eventos.editar', compact('evento'));
+
+        $promociones = [
+            '60%',
+            '50%',
+            '2x1',
+            '40%',
+            '3x2',
+            '30%',
+            '25%',
+            '20%',
+            '15%',
+            '10%',
+            '5%',
+            'Sin promoción'
+        ];
+        $recintos = Recinto::all();
+
+        $menu = "Eventos";
+        $title = "Editar Evento";
+
+        // Si quieres mostrar todos los géneros disponibles:
+        // $generos = Genero::all();
+
+        $categorias = Categoria::with('generos')->get();
+
+        return view('eventos.nuevo', compact('menu', 'title', 'evento', 'promociones', 'recintos', 'categorias'));
     }
 
     /**
-     * Actualiza un evento en la base de datos.
+     * Actualiza un evento en la base de datos (incluyendo géneros).
      */
     public function update(Request $request, Evento $evento)
     {
-        // dd($request->all(), $request->hasFile('foto'));
-
         $request->validate([
             'nombre' => 'required|string|max:190',
             'recinto' => 'required|exists:recinto,id',
             'tipo_horario' => 'required|in:temporada,funciones,unico_dia',
-
             'horarios' => [
                 'required',
                 function ($attribute, $value, $fail) {
@@ -189,44 +227,47 @@ class EventosController extends Controller
                     }
                 }
             ],
-
             'precio_bajo' => $request->has('es_gratuito') ? 'nullable' : 'required|string|max:190',
             'precio_alto' => $request->has('es_gratuito') ? 'nullable' : 'required|string|max:190',
-
             'descripcion' => 'required|string',
             'es_gratuito' => 'nullable|boolean',
+            'generos' => 'array',
+            'generos.*' => 'exists:generos,id',
         ]);
 
-        $evento->fill($request->except(['horarios']));
-        $evento->fill($request->except('es_gratuito', 'horario'));
+        // Rellenamos excepto “foto” y “horarios” para tratarlos aparte
+        $evento->fill($request->except(['foto', 'horarios', 'generos']));
 
         $evento->recinto = (int) $request->input('recinto');
-
         $evento->es_gratuito = $request->has('es_gratuito') ? 1 : 0;
+
+        // Si es gratuito, forzamos precios a 0
+        if ($evento->es_gratuito) {
+            $evento->precio_bajo = '0';
+            $evento->precio_alto = '0';
+        }
 
         // Manejo de la imagen en actualización
         if ($request->hasFile('foto')) {
-            // Eliminar la imagen anterior
-            Storage::disk('public')->delete('eventos/' . $evento->foto);
+            // Borrar la imagen anterior si existe
+            if ($evento->foto) {
+                Storage::disk('public')->delete('eventos/' . $evento->foto);
+            }
 
             $fileName = md5(uniqid()) . '.' . $request->file('foto')->getClientOriginalExtension();
             $request->file('foto')->storeAs('public/eventos', $fileName);
             $evento->foto = $fileName;
         }
 
-        // Manejo del horario
+        // Manejo del horario (JSON)
         if ($request->filled('horarios')) {
             $horarios = json_decode($request->input('horarios'), true);
-
             if (json_last_error() === JSON_ERROR_NONE) {
                 $evento->horario = json_encode($horarios);
-
-                // Obtener la fecha más temprana y la más tardía
                 $fechas = array_keys($horarios);
                 sort($fechas);
-
-                $evento->fecha_inicio = $fechas[0]; // Fecha más antigua
-                $evento->fecha_fin = end($fechas); // Fecha más reciente
+                $evento->fecha_inicio = $fechas[0];
+                $evento->fecha_fin = end($fechas);
             } else {
                 return back()->withErrors(['horarios' => 'Error al procesar los horarios.']);
             }
@@ -236,9 +277,11 @@ class EventosController extends Controller
             $evento->fecha_fin = null;
         }
 
-        // dd($evento);
-
+        // Guardamos primero el evento
         $evento->save();
+
+        // Sincronizar géneros en la pivote
+        $evento->generos()->sync($request->input('generos', []));
 
         return redirect()->route('eventos.index')->with('success', 'Evento actualizado correctamente.');
     }
@@ -248,8 +291,11 @@ class EventosController extends Controller
      */
     public function destroy(Evento $evento)
     {
+        // Eliminar imagen principal
         Storage::disk('public')->delete('eventos/' . $evento->foto);
-        $evento->galeria()->delete();
+
+
+        // Eliminar el evento (y se eliminarán las filas de pivote si la FK está en cascade)
         $evento->delete();
 
         return redirect()->route('eventos.index')->with('success', 'Evento eliminado correctamente.');
@@ -283,5 +329,30 @@ class EventosController extends Controller
         $imagen->delete();
 
         return redirect()->route('eventos.addImages', $imagen->evento_id)->with('success', 'Imagen eliminada correctamente.');
+    }
+
+    public function attachGenero(Request $request, Evento $evento)
+    {
+        $request->validate([
+            'genero_id' => 'required|exists:generos,id'
+        ]);
+
+        $evento->generos()->attach($request->input('genero_id'));
+
+        // Respuesta JSON si manejas todo por AJAX
+        return response()->json([
+            'success' => true,
+            'message' => 'Género agregado',
+        ]);
+    }
+
+    public function detachGenero(Evento $evento, \App\Models\Genero $genero)
+    {
+        $evento->generos()->detach($genero->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Género eliminado',
+        ]);
     }
 }

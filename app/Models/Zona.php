@@ -9,6 +9,7 @@ class Zona extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
     /**
      * La tabla asociada al modelo.
      *
