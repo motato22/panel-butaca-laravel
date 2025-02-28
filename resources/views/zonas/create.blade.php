@@ -95,19 +95,11 @@
                         </div>
                     </form>
 
-                </div> {{-- col-12 --}}
-            </div> {{-- row --}}
-        </div> {{-- card-body --}}
-    </div> {{-- card --}}
-</div> {{-- container --}}
+                </div> 
+            </div> 
+        </div> 
+    </div> 
+</div> 
 @endsection
 
-{{-- Si necesitas scripts adicionales, agrégalos aquí --}}
-@section('scripts')
-<script>
-    // Por si necesitas lógica JS adicional
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Create Zona script ready');
-    });
-</script>
-@endsection
+

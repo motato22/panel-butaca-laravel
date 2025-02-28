@@ -130,8 +130,8 @@
             @endif
 
             @if( auth()->user()->role == 'ROLE_ADMIN' )
-            <li class="menu-item {{ in_array($menu, ['Prensa']) ? 'active opened' : ''}}">
-                <a href="{{url('prensa')}}" class="menu-link">
+            <li class="menu-item {{ in_array($menu, ['Tipo_Zonas']) ? 'active opened' : ''}}">
+                <a href="{{url('tipoZona')}}" class="menu-link">
                     <span class="menu-label">
                         <span class="menu-name">Tipos de Zona</span>
                     </span>
@@ -143,8 +143,8 @@
             @endif
 
             @if( auth()->user()->role == 'ROLE_ADMIN' )
-            <li class="menu-item {{ in_array($menu, ['Premios']) ? 'active opened' : ''}}">
-                <a href="{{url('premios')}}" class="menu-link">
+            <li class="menu-item {{ in_array($menu, ['Informacion']) ? 'active opened' : ''}}">
+                <a href="{{url('info')}}" class="menu-link">
                     <span class="menu-label">
                         <span class="menu-name">Información</span>
                     </span>

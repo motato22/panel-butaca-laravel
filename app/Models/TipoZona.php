@@ -9,6 +9,8 @@ class TipoZona extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     /**
      * La tabla asociada al modelo.
      *
@@ -21,8 +23,7 @@ class TipoZona extends Model
      *
      * @var array
      */
-    protected $fillable = ['nombre']; // Ajusta los atributos según las columnas de la tabla.
-
+    protected $fillable = ['tipo'];
     /**
      * Relación: Un tipo de zona puede tener muchas zonas.
      */

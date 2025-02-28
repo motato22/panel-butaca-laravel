@@ -8,8 +8,8 @@ use App\Http\Controllers\RecintosController;
 use App\Http\Controllers\EventosController;
 use App\Http\Controllers\GenerosController;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\AwardsController;
-use App\Http\Controllers\PrensaController;
+use App\Http\Controllers\TipoZonaController;
+use App\Http\Controllers\InfoController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\CustomersController;
@@ -162,6 +162,23 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('zonas', ZonaRecintoController::class);
     // Ruta manual para eliminar:
     Route::delete('/zonas/{zona}', [ZonaRecintoController::class, 'destroy'])
-         ->name('zonas.destroy');
+        ->name('zonas.destroy');
 
+    // Tipo Zonas
+    Route::prefix('/tipoZona')->name('tipo_zona.')->group(function () {
+        Route::get('/', [TipoZonaController::class, 'index'])->name('index');
+        Route::get('/new', [TipoZonaController::class, 'create'])->name('create');
+        Route::post('/new', [TipoZonaController::class, 'store'])->name('store');
+        Route::get('/{tipoZona}/edit', [TipoZonaController::class, 'edit'])->name('edit');
+        Route::put('/{tipoZona}', [TipoZonaController::class, 'update'])->name('update');
+        Route::delete('/{tipoZona}', [TipoZonaController::class, 'destroy'])->name('destroy');
+    });
+
+    //Info
+    Route::prefix('/info')->name('info.')->group(function () {
+        Route::get('/', [InfoController::class, 'index'])->name('index');
+        Route::get('/{info}', [InfoController::class, 'show'])->name('show');
+        Route::get('/{info}/edit', [InfoController::class, 'edit'])->name('edit');
+        Route::put('/{info}', [InfoController::class, 'update'])->name('update');
+    });
 });

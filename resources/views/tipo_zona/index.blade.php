@@ -2,26 +2,23 @@
 
 @section('title', 'Zona de recintos')
 
-
-
 @section('content')
 <div class="bg-dark m-b-30">
     <div class="container">
         <div class="row p-b-60 p-t-60">
-
             <div class="col-md-10 mx-auto text-center text-white p-b-30">
                 <div class="m-b-20">
                     <div class="avatar avatar-xl my-auto">
-                        <i class="icon-placeholder mdi mdi-map" style="font-size: 5rem"></i>
+                        <i class="icon-placeholder mdi mdi-map-legend" style="font-size: 5rem"></i>
                     </div>
                 </div>
-                <h1>Zona de recintos
-                    <a href="{{ route('zonas.create') }}" class="btn btn-rounded-circle py-1 btn-outline-primary ml-2">
+                <h1>
+                    Tipo de Zonas
+                    <a href="{{ route('tipo_zona.create') }}" class="btn btn-rounded-circle py-1 btn-outline-primary ml-2">
                         <i class="mdi mdi-plus mdi-18px"></i>
                     </a>
                 </h1>
             </div>
-
         </div>
     </div>
 </div>
@@ -36,25 +33,23 @@
                             <thead>
                                 <tr class="text-center">
                                     <th>id</th>
-                                    <th>Zona</th>
-                                    <th>Tipo</th>
+                                    <th>Nombre</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($zonas as $zona)
+                                @foreach($zonas as $zona)
                                 <tr class="text-center">
                                     <td>{{ $zona->id }}</td>
-                                    <td>{{ $zona->zona }}</td>
-                                    <td>{{ optional($zona->tipoZona)->tipo }}</td>
+                                    <td>{{ $zona->tipo }}</td>
                                     <td>
-                                        <a href="{{ route('zonas.edit', $zona->id) }}" class="btn btn-sm m-b-15 ml-1 btn-primary py-0 px-1 btn-primary">
+                                        <a href="{{ route('tipo_zona.edit', $zona->id) }}" class="btn btn-sm m-b-15 ml-1 btn-primary py-0 px-1">
                                             <i class="mdi mdi-pencil mdi-18px"></i>
                                         </a>
-                                        <form action="{{ route('zonas.destroy', $zona->id) }}"
+                                        <form action="{{ route('tipo_zona.destroy', $zona->id) }}"
                                             method="POST"
                                             style="display:inline-block"
-                                            onsubmit="return confirm('¿Seguro que deseas eliminar la zona {{ $zona->zona }}?');">
+                                            onsubmit="return confirm('¿Seguro que deseas eliminar el Tipo de zona {{ $zona->tipo }}?');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm m-b-15 ml-1 btn-primary py-0 px-1 btn-danger">
