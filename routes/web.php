@@ -10,8 +10,8 @@ use App\Http\Controllers\GenerosController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\TipoZonaController;
 use App\Http\Controllers\InfoController;
-use App\Http\Controllers\ProjectsController;
-use App\Http\Controllers\PaymentsController;
+use App\Http\Controllers\SitioInteresController;
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\PropertiesController;
@@ -180,5 +180,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{info}', [InfoController::class, 'show'])->name('show');
         Route::get('/{info}/edit', [InfoController::class, 'edit'])->name('edit');
         Route::put('/{info}', [InfoController::class, 'update'])->name('update');
+    });
+
+    // Sitios de Interes
+    Route::prefix('/sitios')->name('sitios.')->group(function () {
+        Route::get('/', [SitioInteresController::class, 'index'])->name('index');
+        Route::get('/create', [SitioInteresController::class, 'create'])->name('create');
+        Route::post('/', [SitioInteresController::class, 'store'])->name('store');
+        Route::delete('/{sitio}', [SitioInteresController::class, 'destroy'])->name('destroy');
+    });
+
+   // Banners
+    Route::prefix('/banners')->name('banners.')->group(function () {
+        Route::get('/', [BannerController::class, 'index'])->name('index');
+        Route::get('/create', [BannerController::class, 'create'])->name('create');
+        Route::post('/', [BannerController::class, 'store'])->name('store');
+        Route::get('/{banner}/edit', [BannerController::class, 'edit'])->name('edit');
+        Route::put('/{banner}', [BannerController::class, 'update'])->name('update');
+        Route::delete('/{banner}', [BannerController::class, 'destroy'])->name('destroy');
     });
 });

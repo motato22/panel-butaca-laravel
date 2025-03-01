@@ -75,13 +75,13 @@
                                     @endphp
 
                                     @if ($currentImage)
-                                    <img class="img-thumbnail max-height-6 mb-2"
-                                        src="{{ $currentImage }}"
-                                        alt="Imagen del evento">
+                                        <img class="img-thumbnail max-height-6 mb-2"
+                                            src="{{ asset('storage/eventos/' . $currentImage) }}"
+                                            alt="Imagen del evento">
                                     @else
-                                    <img class="img-thumbnail max-height-6 mb-2"
-                                        src="{{ asset('img/placeholder.png') }}"
-                                        alt="Sin imagen">
+                                        <img class="img-thumbnail max-height-6 mb-2"
+                                            src="{{ asset('img/placeholder.png') }}"
+                                            alt="Sin imagen">
                                     @endif
 
                                     <div class="input-group mb-3">

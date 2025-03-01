@@ -31,7 +31,7 @@ class InfoController extends Controller
     public function edit(Info $info)
     {
         $menu = 'Informacion';
-        return view('info.edit', compact('menu','info'));
+        return view('info.edit', compact('menu', 'info'));
     }
 
     /**
@@ -43,9 +43,10 @@ class InfoController extends Controller
             'texto' => 'required|string',
         ]);
 
-        // Solo se actualiza el campo "texto"
+        
         $info->update($request->only('texto'));
 
-        return redirect()->route('info.index')->with('success', 'Información actualizada correctamente.');
+        return redirect()->route('info.index')
+            ->with('success', 'Información actualizada correctamente.');
     }
 }
