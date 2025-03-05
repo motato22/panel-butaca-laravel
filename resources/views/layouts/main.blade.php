@@ -184,8 +184,8 @@
                 @endif
 
                 @if( auth()->user()->role == 'ROLE_ADMIN' )
-                <li class="menu-item {{ in_array($menu, ['Mi perfil']) ? 'active opened' : ''}}">
-                    <a href="{{url('mi-perfil')}}" class="menu-link">
+                <li class="menu-item {{ in_array($menu, ['Promociones']) ? 'active opened' : ''}}">
+                    <a href="{{ route('cupon.index') }}" class="menu-link">
                         <span class="menu-label">
                             <span class="menu-name">Promociones|Notificaciones</span>
                         </span>

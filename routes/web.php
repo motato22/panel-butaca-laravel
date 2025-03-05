@@ -12,8 +12,8 @@ use App\Http\Controllers\TipoZonaController;
 use App\Http\Controllers\InfoController;
 use App\Http\Controllers\SitioInteresController;
 use App\Http\Controllers\BannerController;
-use App\Http\Controllers\CustomersController;
-use App\Http\Controllers\MyProfileController;
+use App\Http\Controllers\CuponController;
+use App\Http\Controllers\NotificacionesController;
 use App\Http\Controllers\PropertiesController;
 use App\Http\Controllers\SupportFaqsController;
 use App\Http\Controllers\NotificationsPushController;
@@ -190,7 +190,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{sitio}', [SitioInteresController::class, 'destroy'])->name('destroy');
     });
 
-   // Banners
+    // Banners
     Route::prefix('/banners')->name('banners.')->group(function () {
         Route::get('/', [BannerController::class, 'index'])->name('index');
         Route::get('/create', [BannerController::class, 'create'])->name('create');
@@ -198,5 +198,33 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{banner}/edit', [BannerController::class, 'edit'])->name('edit');
         Route::put('/{banner}', [BannerController::class, 'update'])->name('update');
         Route::delete('/{banner}', [BannerController::class, 'destroy'])->name('destroy');
+    });
+
+    // Promociones
+    Route::prefix('cupon')->name('cupon.')->group(function () {
+        Route::get('/', [CuponController::class, 'index'])->name('index');
+        Route::get('/create', [CuponController::class, 'create'])->name('create');
+        Route::post('/', [CuponController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [CuponController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [CuponController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CuponController::class, 'destroy'])->name('destroy');
+
+        // Toggle de activación
+        Route::get('/{id}/toggle-activacion', [CuponController::class, 'toggleActivacion'])
+            ->name('toggleActivacion');
+    });
+
+    // Notificaciones
+    Route::prefix('notificacion')->name('notificacion.')->group(function () {
+        Route::get('/', [NotificacionesController::class, 'index'])->name('index');
+        Route::get('/create', [NotificacionesController::class, 'create'])->name('create');
+        Route::post('/', [NotificacionesController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [NotificacionesController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [NotificacionesController::class, 'update'])->name('update');
+        Route::delete('/{id}', [NotificacionesController::class, 'destroy'])->name('destroy');
+
+        // Si deseas un toggle de activación para notificaciones
+        Route::get('/{id}/toggleActivacion', [NotificacionesController::class, 'toggleActivacion'])
+            ->name('toggleActivacion');
     });
 });
