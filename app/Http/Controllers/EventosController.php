@@ -142,7 +142,7 @@ class EventosController extends Controller
         // Manejo de la imagen
         if ($request->hasFile('foto')) {
             $fileName = md5(uniqid()) . '.' . $request->file('foto')->getClientOriginalExtension();
-            $request->file('foto')->storeAs('public/eventos', $fileName);
+            $request->file('foto')->storeAs('public/uploads/eventos', $fileName);
             $evento->foto = $fileName;
         } else {
             $evento->foto = null;
@@ -251,11 +251,11 @@ class EventosController extends Controller
         if ($request->hasFile('foto')) {
             // Borrar la imagen anterior si existe
             if ($evento->foto) {
-                Storage::disk('public')->delete('eventos/' . $evento->foto);
+                Storage::disk('public')->delete('uploads/eventos/' . $evento->foto);
             }
 
             $fileName = md5(uniqid()) . '.' . $request->file('foto')->getClientOriginalExtension();
-            $request->file('foto')->storeAs('public/eventos', $fileName);
+            $request->file('foto')->storeAs('public/uploads/eventos', $fileName);
             $evento->foto = $fileName;
         }
 
@@ -292,7 +292,7 @@ class EventosController extends Controller
     public function destroy(Evento $evento)
     {
         // Eliminar imagen principal
-        Storage::disk('public')->delete('eventos/' . $evento->foto);
+        Storage::disk('public')->delete('uploads/eventos/' . $evento->foto);
 
 
         // Eliminar el evento (y se eliminarán las filas de pivote si la FK está en cascade)
@@ -312,7 +312,7 @@ class EventosController extends Controller
 
         foreach ($request->file('galeria') as $image) {
             GaleriaEvento::create([
-                'image' => $image->store('eventos/galeria', 'public'),
+                'image' => $image->store('uploads/eventos/galeria', 'public'),
                 'evento_id' => $evento->id,
             ]);
         }

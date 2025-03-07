@@ -70,13 +70,13 @@
                                     @php
                                     // Si existe un evento y tiene foto, la mostramos
                                     $currentImage = isset($evento) && $evento->foto
-                                    ? asset('storage/eventos/' . $evento->foto)
+                                    ? asset('uploads/eventos/' . $evento->foto)
                                     : null;
                                     @endphp
 
                                     @if ($currentImage)
                                         <img class="img-thumbnail max-height-6 mb-2"
-                                            src="{{ asset('storage/eventos/' . $currentImage) }}"
+                                            src="{{ $currentImage }}"
                                             alt="Imagen del evento">
                                     @else
                                         <img class="img-thumbnail max-height-6 mb-2"
@@ -444,28 +444,200 @@
 @endphp
 
 <script>
-    
-    let horarios = @json(isset($evento) ? $evento->horario : []);
-        if (!horarios) {
-        horarios = {}; // o []
+    // Se carga el JSON de horarios del evento (en modo edición) o se inicializa vacío
+    let horarios = @json(isset($evento) ? $evento->horario : null);
+    if (!horarios || typeof horarios !== 'object') {
+        horarios = {};
     }
 
-    // Variables en JavaScript para usar en los template strings
+    // Variables antiguas para edición, provenientes de Blade
     let oldFechaInicioTemporada   = "{{ $oldFechaInicioTemporada }}";
     let oldFechaFinTemporada      = "{{ $oldFechaFinTemporada }}";
     let oldHorarioTemporadaInicio = "{{ $oldHorarioTemporadaInicio }}";
     let oldHorarioTemporadaFin    = "{{ $oldHorarioTemporadaFin }}";
     let oldFechaUnico             = "{{ $oldFechaUnico }}";
 
-    // Cuando cargue el DOM, disparamos 'change' en #tipo_horario para renderizar el bloque correcto
+    // Función para actualizar el input oculto con el JSON unificado
+    function actualizarHorariosInput() {
+        let hiddenField = document.getElementById("horarios_json");
+        if (hiddenField) {
+            hiddenField.value = JSON.stringify(horarios);
+        }
+    }
+
+    // Función para renderizar la lista de horarios (para tipo "funciones")
+    function renderizarHorarios() {
+        let contenedor = document.getElementById("lista_horarios");
+        if (!contenedor) return;
+        contenedor.innerHTML = "<h5>Lista de horarios</h5>";
+
+        Object.keys(horarios).forEach(fecha => {
+            let divFecha = document.createElement("div");
+            divFecha.classList.add("p-3", "mb-2", "shadow-sm", "border", "rounded");
+
+            let rowDiv = document.createElement("div");
+            rowDiv.classList.add("row", "align-items-center");
+
+            let colBorrar = document.createElement("div");
+            colBorrar.classList.add("col-md-3", "text-left");
+            let btnEliminarFecha = document.createElement("button");
+            btnEliminarFecha.classList.add("btn", "btn-danger", "btn-sm", "w-100");
+            btnEliminarFecha.innerText = "Borrar";
+            btnEliminarFecha.onclick = () => {
+                delete horarios[fecha];
+                renderizarHorarios();
+                actualizarHorariosInput();
+            };
+            colBorrar.appendChild(btnEliminarFecha);
+
+            let colContenido = document.createElement("div");
+            colContenido.classList.add("col-md-9");
+            let titulo = document.createElement("div");
+            titulo.classList.add("font-weight-bold", "mb-2");
+
+            let [yyyy, mm, dd] = fecha.split("-");
+            // Ajuste: forzamos la hora a mediodía para evitar desfases por zona horaria
+            let dateObj = new Date(yyyy, mm - 1, dd, 12);
+            titulo.innerHTML = dateObj.toLocaleDateString("es-ES", {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+
+            let horariosDiv = document.createElement("div");
+            horariosDiv.classList.add("d-flex", "flex-wrap");
+
+            horarios[fecha].forEach(hora => {
+                let badge = document.createElement("span");
+                badge.classList.add("badge", "badge-secondary", "p-2", "m-1", "d-flex", "align-items-center");
+                badge.innerHTML = `${hora} `;
+                let closeButton = document.createElement("button");
+                closeButton.classList.add("btn", "btn-sm", "btn-light", "ml-1", "p-0");
+                closeButton.innerHTML = "✖";
+                closeButton.onclick = () => {
+                    horarios[fecha] = horarios[fecha].filter(h => h !== hora);
+                    if (horarios[fecha].length === 0) {
+                        delete horarios[fecha];
+                    }
+                    renderizarHorarios();
+                    actualizarHorariosInput();
+                };
+                badge.appendChild(closeButton);
+                horariosDiv.appendChild(badge);
+            });
+
+            colContenido.appendChild(titulo);
+            colContenido.appendChild(horariosDiv);
+            rowDiv.appendChild(colBorrar);
+            rowDiv.appendChild(colContenido);
+            divFecha.appendChild(rowDiv);
+
+            contenedor.appendChild(divFecha);
+        });
+
+        actualizarHorariosInput();
+    }
+
+    // Función para actualizar el JSON en el caso "temporada"
+    function actualizarHorariosTemporada() {
+        const fechaInicioStr = document.querySelector('input[name="fecha_inicio_temporada"]').value;
+        const fechaFinStr = document.querySelector('input[name="fecha_fin_temporada"]').value;
+        const horarioInicio = document.querySelector('input[name="horario_temporada_inicio"]').value;
+        const horarioFin = document.querySelector('input[name="horario_temporada_fin"]').value;
+        
+        // Obtener los días seleccionados (por ejemplo, "Lunes", "Martes", etc.)
+        const diasCheckboxes = document.querySelectorAll('input[name="dias_temporada[]"]:checked');
+        let diasSeleccionados = [];
+        diasCheckboxes.forEach(cb => {
+            diasSeleccionados.push(cb.value);
+        });
+
+        // Si faltan datos o no hay días seleccionados, limpia el objeto
+        if (!fechaInicioStr || !fechaFinStr || diasSeleccionados.length === 0) {
+            horarios = {};
+            actualizarHorariosInput();
+            return;
+        }
+
+        // Convertir las fechas de entrada a objetos Date
+        let fechaInicio = new Date(fechaInicioStr);
+        let fechaFin = new Date(fechaFinStr);
+
+        // Reiniciamos el objeto de horarios
+        horarios = {};
+
+        // Mapeo para obtener el nombre del día en español (JavaScript: 0=Domingo, 1=Lunes, etc.)
+        const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+        // Recorrer desde la fecha de inicio hasta la fecha de fin
+        for (let d = new Date(fechaInicio); d <= fechaFin; d.setDate(d.getDate() + 1)) {
+            let diaNombre = diasSemana[d.getDay()];
+            if (diasSeleccionados.includes(diaNombre)) {
+                // Formatear la fecha en "YYYY-MM-DD"
+                let anio = d.getFullYear();
+                let mes = (d.getMonth() + 1).toString().padStart(2, "0");
+                let dia = d.getDate().toString().padStart(2, "0");
+                let fechaFormateada = `${anio}-${mes}-${dia}`;
+                horarios[fechaFormateada] = [horarioInicio, horarioFin];
+            }
+        }
+
+        actualizarHorariosInput();
+    }
+
+    // Función para actualizar el JSON en el caso "unico_dia"
+    function actualizarHorariosUnico() {
+        const fechaUnico = document.querySelector('input[name="fecha_unico"]').value;
+        const horarioInicio = document.querySelector('input[name="horario_temporada_inicio"]').value;
+        const horarioFin = document.querySelector('input[name="horario_temporada_fin"]').value;
+        if (fechaUnico) {
+            horarios = {};
+            horarios[fechaUnico] = [horarioInicio, horarioFin];
+        } else {
+            horarios = {};
+        }
+        actualizarHorariosInput();
+    }
+
+    // Función para determinar el tipo de horario a partir del JSON existente (modo edición)
+    function detectarTipoHorario() {
+        let keys = Object.keys(horarios);
+        let tipoSeleccionado = "";
+        if (keys.length === 0) {
+            tipoSeleccionado = ""; // Sin datos; se deja el select sin asignar valor
+        } else if (keys.length === 1) {
+            // Si solo hay una fecha y tiene 2 elementos: único día
+            if (horarios[keys[0]].length === 2) {
+                tipoSeleccionado = "unico_dia";
+            } else {
+                tipoSeleccionado = "funciones";
+            }
+        } else {
+            // Más de una fecha: si todas tienen 2 elementos iguales, es temporada; de lo contrario, funciones
+            let allSame = true;
+            let first = horarios[keys[0]];
+            for (let i = 1; i < keys.length; i++) {
+                let arr = horarios[keys[i]];
+                if (arr.length !== 2 || arr[0] !== first[0] || arr[1] !== first[1]) {
+                    allSame = false;
+                    break;
+                }
+            }
+            tipoSeleccionado = allSame ? "temporada" : "funciones";
+        }
+        return tipoSeleccionado;
+    }
+
+    // Al cargar el DOM, se determina el tipo de horario según los datos existentes y se dispara el evento change
     document.addEventListener("DOMContentLoaded", function() {
         let tipoHorarioSelect = document.getElementById("tipo_horario");
         if (tipoHorarioSelect) {
+            // Detectar el tipo basado en el JSON
+            tipoHorarioSelect.value = detectarTipoHorario();
+            // Despachar el evento para renderizar el bloque correspondiente
             tipoHorarioSelect.dispatchEvent(new Event('change'));
         }
     });
 
-    // Al cambiar el select de tipo de horario
+    // Al cambiar el select de tipo de horario, se renderiza el bloque correspondiente y se rellenan los datos (en modo edición)
     document.getElementById("tipo_horario").addEventListener("change", function() {
         let tipo = this.value;
         let contenedor = document.getElementById("contenedor_horarios");
@@ -476,42 +648,79 @@
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label>Fecha de inicio <span style="color: red;">*</span></label>
-                        <input type="date" name="fecha_inicio_temporada" class="form-control"
-                               value="${oldFechaInicioTemporada}">
+                        <input type="date" name="fecha_inicio_temporada" class="form-control">
                         <small class="form-text text-muted text-right">Fecha de Inicio de la Temporada</small>
                     </div>
                     <div class="form-group col-md-6">
                         <label>Fecha de fin <span style="color: red;">*</span></label>
-                        <input type="date" name="fecha_fin_temporada" class="form-control"
-                               value="${oldFechaFinTemporada}">
+                        <input type="date" name="fecha_fin_temporada" class="form-control">
                         <small class="form-text text-muted text-right">Fecha de Término de la Temporada</small>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label>Días con actividad <span style="color: red;">*</span></label>
                     <div>
-                        ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(dia => {
-                            return `<label><input type="checkbox" name="dias_temporada[]" value="${dia}"> ${dia}</label> | `;
-                        }).join('')}
+                        ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+                            .map(dia => `<label><input type="checkbox" name="dias_temporada[]" value="${dia}"> ${dia}</label>`)
+                            .join(' | ')}
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group col-md-2">
                         <label>Horario de Inicio <span style="color: red;">*</span></label>
-                        <input type="time" name="horario_temporada_inicio" class="form-control"
-                               value="${oldHorarioTemporadaInicio}">
+                        <input type="time" name="horario_temporada_inicio" class="form-control">
                     </div>
                     <div class="form-group col-md-2">
                         <label>Horario de Término <span style="color: red;">*</span></label>
-                        <input type="time" name="horario_temporada_fin" class="form-control"
-                               value="${oldHorarioTemporadaFin}">
+                        <input type="time" name="horario_temporada_fin" class="form-control">
                     </div>
                 </div>
+                <input type="hidden" name="horarios" id="horarios_json">
             `;
-        }
-        else if (tipo === "funciones") {
+
+            // Asignar eventos para actualizar el JSON
+            document.querySelector('input[name="fecha_inicio_temporada"]').addEventListener("change", actualizarHorariosTemporada);
+            document.querySelector('input[name="fecha_fin_temporada"]').addEventListener("change", actualizarHorariosTemporada);
+            document.querySelector('input[name="horario_temporada_inicio"]').addEventListener("change", actualizarHorariosTemporada);
+            document.querySelector('input[name="horario_temporada_fin"]').addEventListener("change", actualizarHorariosTemporada);
+            document.querySelectorAll('input[name="dias_temporada[]"]').forEach(cb => {
+                cb.addEventListener("change", actualizarHorariosTemporada);
+            });
+
+            // Si existen datos en el JSON, pre-cargamos los valores:
+            let keys = Object.keys(horarios);
+            if (keys.length > 0) {
+                keys.sort();
+                // Rellenamos la fecha de inicio y fin según el mínimo y máximo de las claves
+                let fechaInicio = keys[0];
+                let fechaFin = keys[keys.length - 1];
+                // Se asume que en cada fecha los horarios son iguales, así que se toman del primero
+                let tiempos = horarios[fechaInicio] || [];
+                document.querySelector('input[name="fecha_inicio_temporada"]').value = fechaInicio;
+                document.querySelector('input[name="fecha_fin_temporada"]').value = fechaFin;
+                if (tiempos.length === 2) {
+                    document.querySelector('input[name="horario_temporada_inicio"]').value = tiempos[0];
+                    document.querySelector('input[name="horario_temporada_fin"]').value = tiempos[1];
+                }
+
+                // Marcar los checkboxes según los días que aparecen en las fechas del JSON
+                const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+                let diasSet = new Set();
+                keys.forEach(fecha => {
+                    let [yyyy, mm, dd] = fecha.split("-");
+                    // Ajuste: forzamos la hora a mediodía
+                    let d = new Date(yyyy, mm - 1, dd, 12);
+                    diasSet.add(diasSemana[d.getDay()]);
+                });
+                document.querySelectorAll('input[name="dias_temporada[]"]').forEach(cb => {
+                    if (diasSet.has(cb.value)) {
+                        cb.checked = true;
+                    }
+                });
+            }
+            actualizarHorariosTemporada();
+
+        } else if (tipo === "funciones") {
             contenedor.innerHTML = `
                 <div id="lista_funciones" class="form-row">
                     <div class="form-group col-md-6">
@@ -530,20 +739,41 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Contenedor donde se mostrarán las funciones agregadas -->
                     <div class="form-group col-md-6">
                         <div id="lista_horarios">
                             <h5>Lista de horarios</h5>
                         </div>
                     </div>
                 </div>
-                <!-- Input oculto para enviar los horarios en el formulario -->
                 <input type="hidden" name="horarios" id="horarios_json">
             `;
-            // Renderiza los horarios existentes (si estamos en edición)
+            // Si existen datos, pre-cargar el primer valor en los inputs
+            let keys = Object.keys(horarios);
+            if (keys.length > 0) {
+                document.getElementById("fecha_funcion").value = keys[0];
+                if(horarios[keys[0]].length > 0) {
+                    document.getElementById("hora_funcion").value = horarios[keys[0]][0];
+                }
+            }
             renderizarHorarios();
-        }
-        else if (tipo === "unico_dia") {
+
+            document.getElementById("btnAgregarFuncion").addEventListener("click", () => {
+                let fechaInput = document.getElementById("fecha_funcion").value;
+                let hora = document.getElementById("hora_funcion").value;
+                if (!fechaInput || !hora) {
+                    alert("Selecciona una fecha y una hora.");
+                    return;
+                }
+                if (!horarios[fechaInput]) {
+                    horarios[fechaInput] = [];
+                }
+                if (!horarios[fechaInput].includes(hora)) {
+                    horarios[fechaInput].push(hora);
+                }
+                renderizarHorarios();
+            });
+
+        } else if (tipo === "unico_dia") {
             contenedor.innerHTML = `
                 <div class="form-row">
                     <div class="form-group col-md-4">
@@ -564,120 +794,25 @@
                                value="${oldHorarioTemporadaFin}">
                     </div>
                 </div>
+                <input type="hidden" name="horarios" id="horarios_json">
             `;
+            if(Object.keys(horarios).length > 0) {
+                let fecha = Object.keys(horarios)[0];
+                let tiempos = horarios[fecha];
+                document.querySelector('input[name="fecha_unico"]').value = fecha;
+                document.querySelector('input[name="horario_temporada_inicio"]').value = tiempos[0];
+                document.querySelector('input[name="horario_temporada_fin"]').value = tiempos[1];
+            }
+            document.querySelector('input[name="fecha_unico"]').addEventListener("change", actualizarHorariosUnico);
+            document.querySelector('input[name="horario_temporada_inicio"]').addEventListener("change", actualizarHorariosUnico);
+            document.querySelector('input[name="horario_temporada_fin"]').addEventListener("change", actualizarHorariosUnico);
+            actualizarHorariosUnico();
         }
     });
 
-    // Lógica para agregar funciones (cuando tipo=funciones)
-    document.addEventListener("click", function(event) {
-        if (event.target && event.target.id === "btnAgregarFuncion") {
-            let fechaInput = document.getElementById("fecha_funcion").value;
-            let hora       = document.getElementById("hora_funcion").value;
-
-            if (!fechaInput || !hora) {
-                alert("Selecciona una fecha y una hora.");
-                return;
-            }
-
-            let fechaCorregida = fechaInput;
-
-            if (!horarios[fechaCorregida]) {
-                horarios[fechaCorregida] = [];
-            }
-            if (!horarios[fechaCorregida].includes(hora)) {
-                horarios[fechaCorregida].push(hora);
-                renderizarHorarios();
-            }
-        }
-    });
-
-    // Eliminar un horario de una fecha
-    function eliminarHorario(fecha, hora) {
-        horarios[fecha] = horarios[fecha].filter(h => h !== hora);
-        if (horarios[fecha].length === 0) {
-            delete horarios[fecha];
-        }
-        renderizarHorarios();
-    }
-
-    // Eliminar fecha completa
-    function eliminarFecha(fecha) {
-        delete horarios[fecha];
-        renderizarHorarios();
-    }
-
-    // Renderizar la lista de horarios en #lista_horarios
-    function renderizarHorarios() {
-        let contenedor = document.getElementById("lista_horarios");
-        if (!contenedor) return;
-
-        contenedor.innerHTML = "<h5>Lista de horarios</h5>";
-
-        Object.keys(horarios).forEach(fecha => {
-            let divFecha = document.createElement("div");
-            divFecha.classList.add("p-3", "mb-2", "shadow-sm", "border", "rounded");
-
-            let rowDiv = document.createElement("div");
-            rowDiv.classList.add("row", "align-items-center");
-
-            let colBorrar = document.createElement("div");
-            colBorrar.classList.add("col-md-3", "text-left");
-
-            let btnEliminarFecha = document.createElement("button");
-            btnEliminarFecha.classList.add("btn", "btn-danger", "btn-sm", "w-100");
-            btnEliminarFecha.innerText = "Borrar";
-            btnEliminarFecha.onclick = () => eliminarFecha(fecha);
-            colBorrar.appendChild(btnEliminarFecha);
-
-            let colContenido = document.createElement("div");
-            colContenido.classList.add("col-md-9");
-
-            let titulo = document.createElement("div");
-            titulo.classList.add("font-weight-bold", "mb-2");
-
-            let [yyyy, mm, dd] = fecha.split("-");
-            let dateObj = new Date(yyyy, mm - 1, dd, 12); // 12 = mediodía
-
-            titulo.innerHTML = dateObj.toLocaleDateString("es-ES", {
-                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-            });
-
-            let horariosDiv = document.createElement("div");
-            horariosDiv.classList.add("d-flex", "flex-wrap");
-
-            horarios[fecha].forEach(hora => {
-                let badge = document.createElement("span");
-                badge.classList.add("badge", "badge-secondary", "p-2", "m-1", "d-flex", "align-items-center");
-
-                let closeButton = document.createElement("button");
-                closeButton.classList.add("btn", "btn-sm", "btn-light", "ml-1", "p-0");
-                closeButton.innerHTML = "✖";
-                closeButton.onclick = () => eliminarHorario(fecha, hora);
-
-                badge.innerHTML = `${hora} `;
-                badge.appendChild(closeButton);
-                horariosDiv.appendChild(badge);
-            });
-
-            colContenido.appendChild(titulo);
-            colContenido.appendChild(horariosDiv);
-
-            rowDiv.appendChild(colBorrar);
-            rowDiv.appendChild(colContenido);
-            divFecha.appendChild(rowDiv);
-
-            contenedor.appendChild(divFecha);
-        });
-
-        // Guardar en el input hidden
-        let hiddenField = document.getElementById("horarios_json");
-        if (hiddenField) {
-            hiddenField.value = JSON.stringify(horarios);
-        }
-    }
-
+    // LÓGICA DE GÉNEROS (AJAX O SIN AJAX)
     @if(isset($evento->id))
-        // ========== LÓGICA DE EDICIÓN (AJAX) ==========
+        // LÓGICA DE EDICIÓN (AJAX)
         const eventoId        = "{{ $evento->id }}";
         const urlFetchGeneros = "{{ url('categorias') }}/"; 
         const urlAttachGenero = "{{ route('eventos.attachGenero', $evento->id) }}";
@@ -689,14 +824,12 @@
             const btnAgregar      = document.getElementById('btnAgregar');
             const tablaGeneros    = document.getElementById('tablaGeneros');
 
-            // Cargar géneros por categoría (para el <select>)
             selectCategoria.addEventListener('change', () => {
                 const categoriaId = selectCategoria.value;
                 if (!categoriaId) {
                     selectGenero.innerHTML = '<option value="">-- Selecciona un género --</option>';
                     return;
                 }
-
                 fetch(urlFetchGeneros + categoriaId + '/generos')
                     .then(res => res.json())
                     .then(data => {
@@ -709,14 +842,12 @@
                     .catch(err => console.error(err));
             });
 
-            // Al hacer clic en "Agregar", POST a attachGenero
             btnAgregar.addEventListener('click', () => {
                 const generoId = selectGenero.value;
                 if (!generoId) {
                     alert("Selecciona un género primero");
                     return;
                 }
-
                 fetch(urlAttachGenero, {
                         method: 'POST',
                         headers: {
@@ -728,7 +859,6 @@
                     .then(res => res.json())
                     .then(response => {
                         if (response.success) {
-                            // Cargamos info del género y lo inyectamos en la tabla
                             fetch(`/api/generos/${generoId}`)
                                 .then(r => r.json())
                                 .then(gen => {
@@ -750,12 +880,10 @@
                     .catch(err => console.error(err));
             });
 
-            // Borrar género (detach)
             tablaGeneros.addEventListener('click', (e) => {
                 if (e.target.classList.contains('btnBorrar')) {
                     let fila = e.target.closest('tr');
                     let generoId = fila.dataset.generoId;
-
                     if (confirm('¿Seguro que deseas quitar este género?')) {
                         fetch(urlDetachGenero + generoId, {
                                 method: 'DELETE',
@@ -777,14 +905,13 @@
             });
         });
     @else
-        // ========== LÓGICA DE CREACIÓN (SIN AJAX) ==========
+        // LÓGICA DE CREACIÓN (SIN AJAX)
         document.addEventListener('DOMContentLoaded', function() {
             const selectCategoria = document.getElementById('selectCategoria');
             const selectGenero    = document.getElementById('selectGenero');
             const btnAgregar      = document.getElementById('btnAgregar');
             const tablaGeneros    = document.getElementById('tablaGeneros');
 
-            // Cargar géneros para el <select> según la categoría
             selectCategoria.addEventListener('change', () => {
                 const categoriaId = selectCategoria.value;
                 if (!categoriaId) {
@@ -803,17 +930,14 @@
                     .catch(err => console.error(err));
             });
 
-            // Al hacer clic en "Agregar", solo creamos una <tr> con un input hidden generos[]
             btnAgregar.addEventListener('click', () => {
                 const generoId = selectGenero.value;
                 if (!generoId) {
                     alert("Selecciona un género primero");
                     return;
                 }
-
                 const categoriaTxt = selectCategoria.options[selectCategoria.selectedIndex].text;
                 const generoTxt    = selectGenero.options[selectGenero.selectedIndex].text;
-
                 let fila = document.createElement('tr');
                 fila.innerHTML = `
                     <td>${categoriaTxt}</td>
@@ -822,17 +946,14 @@
                         <button type="button" class="btn btn-danger btnBorrar">Borrar</button>
                     </td>
                 `;
-                // Input hidden para enviar generos[] en el formulario
                 let inputHidden = document.createElement('input');
                 inputHidden.type  = 'hidden';
                 inputHidden.name  = 'generos[]';
                 inputHidden.value = generoId;
-
                 fila.appendChild(inputHidden);
                 tablaGeneros.appendChild(fila);
             });
 
-            // Borrar la fila
             tablaGeneros.addEventListener('click', (e) => {
                 if (e.target.classList.contains('btnBorrar')) {
                     e.target.closest('tr').remove();
