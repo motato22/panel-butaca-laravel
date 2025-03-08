@@ -70,7 +70,7 @@
                                     @php
                                     // Si existe un evento y tiene foto, la mostramos
                                     $currentImage = isset($evento) && $evento->foto
-                                    ? asset('uploads/eventos/' . $evento->foto)
+                                    ? asset('storage/uploads/eventos/' . $evento->foto)
                                     : null;
                                     @endphp
 

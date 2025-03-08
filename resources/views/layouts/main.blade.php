@@ -204,29 +204,77 @@
     <main class="admin-main">
         <!--site header begins-->
         <header class="admin-header">
-            <a href="#" class="sidebar-toggle" data-toggleclass="sidebar-open" data-target="body"> </a>
-            <nav class=" mr-auto my-auto"></nav>
-            <nav class=" ml-auto">
+            <a href="#" class="sidebar-toggle" data-toggleclass="sidebar-open" data-target="body"></a>
+
+            {{-- Menú izquierdo vacío (mr-auto) --}}
+            <nav class="mr-auto my-auto"></nav>
+
+            {{-- Menú derecho (ml-auto) --}}
+            <nav class="ml-auto">
                 <ul class="nav align-items-center">
-                    <li>{{ auth()->user()->fullname }}</li>
+                    {{-- Campana de notificaciones (idéntico al Panel.html original) --}}
+                    <li class="nav-item">
+                        <div class="dropdown">
+                            <a href="#" class="nav-link" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="mdi mdi-24px mdi-bell-outline"></i>
+                                <!-- Si quieres el globito rojo de ejemplo:
+                             Ajusta la clase .notification-counter con tu CSS para posicionar y colorear el círculo. -->
+                                <span class="notification-counter">3</span>
+                            </a>
+                            <div class="dropdown-menu notification-container dropdown-menu-right">
+                                <div class="d-flex p-all-15 bg-white justify-content-between border-bottom">
+                                    <a href="#!" class="mdi mdi-18px mdi-settings text-muted"></a>
+                                    <span class="h5 m-0">Notificaciones</span>
+                                    <a href="#!" class="mdi mdi-18px mdi-notification-clear-all text-muted"></a>
+                                </div>
+                                <div class="notification-events bg-gray-300">
+                                    <div class="text-overline m-b-5">Hoy</div>
+                                    <p class="d-block m-b-10">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <i class="mdi mdi-information-variant text-info"></i> No tienes notificaciones
+                                        </div>
+                                    </div>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    {{-- Avatar con foto o inicial --}}
                     <li class="nav-item dropdown">
+                        @php
+                        $foto = auth()->user()->foto; // Campo con la ruta de la foto en la BD
+                        $nombre = auth()->user()->nombre; // Campo con el nombre del usuario
+                        $inicial = strtoupper(substr($nombre, 0, 1));
+                        @endphp
+
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <div class="avatar avatar-sm avatar-online">
-                                <img src="{{ asset(auth()->user()->photo)}}" alt="..." class="avatar-img rounded-circle">
+                                @if(!empty($foto) && file_exists(public_path($foto)))
+                                {{-- Si existe la foto en /public/... --}}
+                                <img src="{{ asset($foto) }}" alt="Foto de {{ $nombre }}" class="avatar-img rounded-circle">
+                                @else
+                                {{-- Si no hay foto, usamos la inicial con fondo azul marino (#000080) --}}
+                                <span class="avatar-title rounded-circle text-white"
+                                    style="background-color: #000080; width: 40px; height: 40px; font-size: 1rem; font-weight: 600;">
+                                    {{ $inicial }}
+                                </span>
+                                @endif
                             </div>
                         </a>
+
                         <div class="dropdown-menu dropdown-menu-right">
-                            @if( in_array(auth()->user()->role, ['ROLE_ADMIN', 'ROLE_CLIENT', 'ROLE_ALTERNO']) )
-                            <a class="dropdown-item" href="{{url('mi-perfil')}}">Cambiar contraseña</a>
+                            {{-- Ajusta según tus roles o links --}}
+                            <a class="dropdown-item" href="{{ url('mi-perfil') }}">Cambiar contraseña</a>
                             <div class="dropdown-divider"></div>
-                            @endif
                             <a class="dropdown-item log-out" href="javascript:;">Cerrar sesión</a>
                         </div>
                     </li>
                 </ul>
             </nav>
         </header>
-        <!--site header ends -->
+        <!--site header ends-->
         @yield('content')
     </main>
 
