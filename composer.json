@@ -9,7 +9,7 @@
         "barryvdh/laravel-dompdf": "^2.0",
         "conekta/conekta-php": "5.0.1",
         "guzzlehttp/guzzle": "^7.2",
-        "laravel/framework": "^9.19",
+        "laravel/framework": "^9.52.999",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "league/commonmark": "^2.6.8",
