@@ -244,18 +244,16 @@
                     {{-- Avatar con foto o inicial --}}
                     <li class="nav-item dropdown">
                         @php
-                        $foto = auth()->user()->foto; // Campo con la ruta de la foto en la BD
-                        $nombre = auth()->user()->nombre; // Campo con el nombre del usuario
+                        $foto = auth()->user()->foto; 
+                        $nombre = auth()->user()->nombre;
                         $inicial = strtoupper(substr($nombre, 0, 1));
                         @endphp
 
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <div class="avatar avatar-sm avatar-online">
                                 @if(!empty($foto) && file_exists(public_path($foto)))
-                                {{-- Si existe la foto en /public/... --}}
                                 <img src="{{ asset($foto) }}" alt="Foto de {{ $nombre }}" class="avatar-img rounded-circle">
                                 @else
-                                {{-- Si no hay foto, usamos la inicial con fondo azul marino (#000080) --}}
                                 <span class="avatar-title rounded-circle text-white"
                                     style="background-color: #000080; width: 40px; height: 40px; font-size: 1rem; font-weight: 600;">
                                     {{ $inicial }}
@@ -265,10 +263,9 @@
                         </a>
 
                         <div class="dropdown-menu dropdown-menu-right">
-                            {{-- Ajusta según tus roles o links --}}
-                            <a class="dropdown-item" href="{{ url('mi-perfil') }}">Cambiar contraseña</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item log-out" href="javascript:;">Cerrar sesión</a>
+                            <!-- <a class="dropdown-item" href="{{ url('mi-perfil') }}">Cambiar contraseña</a> -->
+                            <!-- <div class="dropdown-divider"></div> -->
+                            <a class="dropdown-item log-out" href="javascript:;">Logout</a>
                         </div>
                     </li>
                 </ul>
