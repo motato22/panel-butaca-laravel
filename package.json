@@ -8,7 +8,10 @@
         "axios": "^1.1.2",
         "laravel-vite-plugin": "^0.7.0",
         "lodash": "^4.17.19",
-        "postcss": "^8.1.14",
-        "vite": "^3.0.0"
+        "postcss": "^8.1.14"
+    },
+    "dependencies": {
+        "esbuild": "^0.25.1",
+        "vite": "^4.5.9"
     }
 }
