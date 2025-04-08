@@ -8,7 +8,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
    // Route::post('v1/usuario/signoff',   [AuthController::class, 'logout']);
   });
 /**** Acceso */
-Route::post('login_check', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@authenticate');
+Route::post('login_check', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@authenticate');
 Route::post('auth/user/create', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@register');
 Route::get('v1/usuario/perfil/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@perfil');
 Route::put('auth/user/update/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@editPerfil');
