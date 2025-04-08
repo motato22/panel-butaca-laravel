@@ -47,7 +47,7 @@
                         <small class="form-text text-muted">Imagen cuadrada (recomendado: 512 x 512).</small>
                         @if(isset($recinto) && $recinto->foto)
                         <div class="mt-3">
-                            <img src="{{ asset('storage/' . $recinto->foto) }}" class="img-thumbnail" width="150">
+                            <img src="{{ asset('storage/uploads/recintos/' . $recinto->foto) }}" class="img-thumbnail" width="150">
                         </div>
                         @endif
                     </div>

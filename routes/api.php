@@ -3,70 +3,84 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\Api\ApiController as ApiController;
-use App\Http\Controllers\Api\CardsController as CardsController;
-use App\Http\Controllers\Api\UsersController as UsersController;
-use App\Http\Controllers\Api\AwardsController as AwardsController;
-use App\Http\Controllers\Api\PaymentsController as PaymentsController;
-use App\Http\Controllers\Api\SupportFaqsController as SupportFaqsController;
+Route::group(['middleware' => ['auth:sanctum']], function() {    
+    Route::post('v1/usuario/signoff', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@logout');
+   // Route::post('v1/usuario/signoff',   [AuthController::class, 'logout']);
+  });
+/**** Acceso */
+Route::post('login_check', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@authenticate');
+Route::post('auth/user/create', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@register');
+Route::get('v1/usuario/perfil/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@perfil');
+Route::put('auth/user/update/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@editPerfil');
+Route::post('token/refresh', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@refresh');
+Route::post('password/reset', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@resetPassword');
+Route::post('auth/email/exist', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@existsEmail');
+Route::post('auth/username/exist', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@existsUsername');
+Route::post('/auth/user/udeg/check', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@checkUdegUser');
+Route::post('/auth/user/udeg/checkExternal', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@checkUdegUserExternal');
+Route::post('/auth/user/udeg/checkStatus', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@checkStatusUdegUser');
+Route::post('fcm/token/{token}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@registrarFCMToken');
+Route::post('auth/user/update/foto/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@updateFotoPerfil');
+Route::post('v1/usuario/signoff', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@logout');
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
+Route::get('categorias', 'App\Http\Controllers\API\Mobile\Categories\CategoriesController@index');
+Route::put('categorias/{id}', 'App\Http\Controllers\API\Mobile\Categories\CategoriesController@update');
+Route::post('categorias/crear', 'App\Http\Controllers\API\Mobile\Categories\CategoriesController@store');
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+/***Envio de Codigo por sms*** */
+Route::post('send/sms', 'App\Http\Controllers\API\Mobile\Twilio\TwilioController@sendSms');
+/**TEST */
+Route::post('check/usersms', 'App\Http\Controllers\API\Mobile\Twilio\TwilioController@checUserSms');
+Route::put('validate/code/{id}', 'App\Http\Controllers\API\Mobile\Twilio\TwilioController@validateCode');
+Route::put('resend/code/{id}', 'App\Http\Controllers\API\Mobile\Twilio\TwilioController@resendCode');
 
-// Api rest
-Route::prefix('v1')->group(function () {
-    // Webhooks
-    Route::post('webhook',[ApiController::class, 'webhookMain'])->name('webhook.index');
-    Route::post('webhook/spei-recurrente',[ApiController::class, 'webhookSpeiRecurrent'])->name('webhook.spei_recurrent');
+/***Envio de Codigo por email*** */
+// Route::post('send/email/sms', 'App\Http\Controllers\API\Mobile\Email\EmailController@sendCode'); // No se usa
+// Route::post('check/email/usersms', 'App\Http\Controllers\API\Mobile\Email\EmailController@checUserCode'); // No se usa
+Route::put('validate/email/code/{id}', 'App\Http\Controllers\API\Mobile\Email\EmailController@validateCode');
+Route::put('resend/email/code/{id}', 'App\Http\Controllers\API\Mobile\Email\EmailController@resendCode');
 
-    // Endpoints básicos
-    Route::post('login-app',[UsersController::class, 'signInCustomer'])->name('signInCustomer');
-    Route::post('sign-up',[UsersController::class, 'signUpCustomer'])->name('signUpCustomer');
-    Route::post('reset-password',[UsersController::class, 'recoverPassword'])->name('recoverPassword');
-    
-    // Información legal de la app
-    Route::get('faqs',[ApiController::class, 'getFaqs'])->name('getFaqs');
-    Route::get('news',[ApiController::class, 'getNews'])->name('getNews');
-    Route::get('legal-info',[ApiController::class, 'getLegalInfo'])->name('getLegalInfo');
-    Route::get('awards',[AwardsController::class, 'index'])->name('getAwards');
-    
-    // Estado de cuenta
-    Route::get('account-status/{id}',[UsersController::class, 'accountStatus'])->name('accountStatus');
+/*****Categoria */
+Route::get('v1/categoria', 'App\Http\Controllers\API\Mobile\Categories\CategoriesController@index');
 
-    // Authentication required
-    Route::group(['middleware' => ['auth:sanctum']], function() {
-        Route::post('logout',[UsersController::class, 'logoutCustomer'])->name('logoutCustomer');
-        Route::get('notifications',[UsersController::class, 'getNotifications'])->name('getNotifications');
-        // Route::get('account-status/{id}',[UsersController::class, 'accountStatus'])->name('accountStatus');
-        Route::post('notifications',[UsersController::class, 'updateNotification'])->name('updateNotification');
-        Route::post('recover-password',[UsersController::class, 'recoverPassword'])->name('recoverPassword');
-        Route::post('user',[UsersController::class, 'updateUser'])->name('updateUser');
-        Route::post('my-profile',[UsersController::class, 'myProfile'])->name('myProfile');
-        Route::post('account-status',[UsersController::class, 'accountStatus'])->name('accountStatus');
-        
-        // Support Faqs
-        Route::get('support-faqs',[SupportFaqsController::class, 'index'])->name('supportFaqs.get');
-        Route::post('support-faqs',[SupportFaqsController::class, 'save'])->name('supportFaqs.save');
-        
-        // Conekta methods 
-        Route::get('cards',[CardsController::class, 'index'])->name('cards.get');
-        Route::post('cards',[CardsController::class, 'save'])->name('cards.save');
-        Route::post('make-payment',[PaymentsController::class, 'processOrder'])->name('payment.save');
+/*****Generos */
+Route::get('v1/generos', 'App\Http\Controllers\API\Mobile\Generos\GenerosController@index');
 
-        // Payment methods (only admin)
-        Route::middleware('role:Administrador')->get('payments/filters',[PaymentsController::class, 'getFilters'])->name('payment.getFilters');
-        Route::middleware('role:Administrador')->post('payments',[PaymentsController::class, 'getPayments'])->name('payment.get');
-    });
-});
+/*****Banners */
+Route::get('v1/banner', 'App\Http\Controllers\API\Mobile\Banners\BannersController@index');
+Route::get('banner', 'App\Http\Controllers\API\Mobile\Banners\BannersController@getImage');
+
+/*****Cupones */
+Route::get('v1/cupon', 'App\Http\Controllers\API\Mobile\Cupones\CuponesController@index');
+
+/*****Eventos */
+Route::get('v1/evento/para_ti/{id}', 'App\Http\Controllers\API\Mobile\Evento\EventoController@paraTi');
+Route::get('v1/evento/para_ti/{id}', 'App\Http\Controllers\API\Mobile\Evento\EventoController@paraTi');
+Route::get('v1/evento/{id}', 'App\Http\Controllers\API\Mobile\Evento\EventoController@show');
+Route::get('v1/evento/liked/{id}', 'App\Http\Controllers\API\Mobile\Evento\EventoController@likedById');
+//Route::get('v1/evento/filtro', 'App\Http\Controllers\API\Mobile\Evento\EventoController@filtro');
+Route::post('v1/evento/{evento_id}/like/toggle', 'App\Http\Controllers\API\Mobile\Evento\EventoController@toggleLike');
+Route::post('v1/evento/delete/{evento_id}', 'App\Http\Controllers\API\Mobile\Evento\EventoController@unlikeToggle');
+
+Route::post('evento/filtrar', 'App\Http\Controllers\API\Mobile\Evento\EventoController@filtro');
+Route::post('evento/promociones', 'App\Http\Controllers\API\Mobile\Evento\EventoController@promociones');
+Route::post('evento/futuros', 'App\Http\Controllers\API\Mobile\Evento\EventoController@futuros');
+
+/*****Recinto */
+Route::get('v1/recinto', 'App\Http\Controllers\API\Mobile\Recinto\RecintoController@index');
+Route::get('v1/recinto/{id}', 'App\Http\Controllers\API\Mobile\Recinto\RecintoController@show');
+
+/*****Info */
+Route::get('v1/info/{slug}', 'App\Http\Controllers\API\Mobile\Info\InfoController@show');
+Route::get('v1/info/sitios/intereses', 'App\Http\Controllers\API\Mobile\Info\InfoController@sitiosIntereses');
+
+/*****Notificaciones */
+Route::get('/v1/usuario/notificacion', 'App\Http\Controllers\API\Mobile\Notificaciones\NotificacionesController@index');
+
+/***Intereses* */
+Route::post('v1/usuario/intereses', 'App\Http\Controllers\API\Mobile\Intereses\InteresesController@getIntereses');
+Route::post('v1/usuario/intereses2', 'App\Http\Controllers\API\Mobile\Intereses\InteresesController@setInteresesUser');
+Route::get('v1/usuario/intereses2/{user_id}', 'App\Http\Controllers\API\Mobile\Intereses\InteresesController@getInteresesUser');
+
+/***Segmento* */
+Route::post('v1/usuario/segmento', 'App\Http\Controllers\API\Mobile\Intereses\InteresesController@setSegmentoUser');

@@ -64,47 +64,33 @@ class RecintosController extends Controller
     {
         $this->authorize('create', Recinto::class); // Verifica permisos
 
+        // Validaciones (ajusta a tus reglas)
         $validated = $request->validate([
             'zona_id' => 'nullable|exists:zona_recinto,id',
             'nombre' => 'required|string|max:190',
             'foto' => 'nullable|image|max:2048',
-            'contacto' => 'nullable|string|max:190',
-            'web' => 'nullable|url',
-            'horario_inicio' => 'nullable|string|max:190',
-            'horario_fin' => 'nullable|string|max:190',
-            'capacidad' => 'nullable|string|max:190',
-            'facebook' => 'nullable|url',
-            'instagram' => 'nullable|url',
-            'twitter' => 'nullable|url',
-            'youtube' => 'nullable|url',
-            'amenidades' => 'nullable|string|max:190',
-            'descripcion' => 'nullable|string',
-            'video' => 'nullable|url',
-            'promocion' => 'required|boolean',
-            'lat' => 'nullable|string|max:190',
-            'lng' => 'nullable|string|max:190',
-            'direccion' => 'nullable|string|max:190',
-            'telefono' => 'nullable|string|max:190',
+            // ...
             'galeria.*' => 'nullable|image|max:2048',
         ]);
 
         $recinto = new Recinto();
         $recinto->fill($validated);
 
+        // Guardar foto principal en "uploads/recintos"
         if ($request->hasFile('foto')) {
             $file = $request->file('foto');
             $fileName = md5(uniqid()) . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('recintos', $fileName, 'public');
+            $file->storeAs('public/uploads/recintos', $fileName);
             $recinto->foto = $fileName;
         }
 
         $recinto->save();
 
-        // Guardar galería de imágenes
+        // Guardar galería de imágenes en la **misma** carpeta
         if ($request->hasFile('galeria')) {
             foreach ($request->file('galeria') as $image) {
                 $fileName = md5(uniqid()) . '.' . $image->getClientOriginalExtension();
-                $image->storeAs('recintos/galeria', $fileName, 'public');
+                $image->storeAs('public/uploads/recintos', $fileName);
 
                 GaleriaRecinto::create([
                     'image' => $fileName,
@@ -140,54 +126,37 @@ class RecintosController extends Controller
      */
     public function update(Request $request, Recinto $recinto)
     {
+        $this->authorize('update', $recinto);
 
-        $this->authorize('update', $recinto); // Verifica permisos
-
+        // Validaciones
         $validated = $request->validate([
             'zona_id' => 'nullable|exists:zona_recinto,id',
             'nombre' => 'required|string|max:190',
             'foto' => 'nullable|image|max:2048',
-            'contacto' => 'nullable|string|max:190',
-            'web' => 'nullable|url',
-            'horario_inicio' => 'nullable|string|max:190',
-            'horario_fin' => 'nullable|string|max:190',
-            'capacidad' => 'nullable|string|max:190',
-            'facebook' => 'nullable|url',
-            'instagram' => 'nullable|url',
-            'twitter' => 'nullable|url',
-            'youtube' => 'nullable|url',
-            'amenidades' => 'nullable|string|max:190',
-            'descripcion' => 'nullable|string',
-            'video' => 'nullable|url',
-            'promocion' => 'required|boolean',
-            'lat' => 'nullable|string|max:190',
-            'lng' => 'nullable|string|max:190',
-            'direccion' => 'nullable|string|max:190',
-            'telefono' => 'nullable|string|max:190',
-            'galeria.*' => 'nullable|image|max:2048', // Validación para la galería
+            // ...
+            'galeria.*' => 'nullable|image|max:2048',
         ]);
 
         $recinto->fill($validated);
 
+        // Actualizar foto principal
         if ($request->hasFile('foto')) {
-            // Eliminar la foto anterior si existe
             if ($recinto->foto) {
-                Storage::disk('public')->delete('recintos/' . $recinto->foto);
+                Storage::disk('public')->delete('uploads/recintos/' . $recinto->foto);
             }
-
             $file = $request->file('foto');
             $fileName = md5(uniqid()) . '.' . $file->getClientOriginalExtension();
-            $file->storeAs('recintos', $fileName, 'public');
+            $file->storeAs('public/uploads/recintos', $fileName);
             $recinto->foto = $fileName;
         }
 
         $recinto->save();
 
-        // Guardar galería de imágenes
+       
         if ($request->hasFile('galeria')) {
             foreach ($request->file('galeria') as $image) {
                 $fileName = md5(uniqid()) . '.' . $image->getClientOriginalExtension();
-                $image->storeAs('recintos/galeria', $fileName, 'public');
+                $image->storeAs('public/uploads/recintos', $fileName);
 
                 GaleriaRecinto::create([
                     'image' => $fileName,
@@ -209,26 +178,23 @@ class RecintosController extends Controller
     {
         $this->authorize('delete', $recinto);
 
-        // Eliminar imagen principal
+      
         if ($recinto->foto) {
-            Storage::disk('public')->delete('recintos/' . $recinto->foto);
+            Storage::disk('public')->delete('uploads/recintos/' . $recinto->foto);
         }
 
-        // Eliminar imágenes de galería
+        
         foreach ($recinto->galeria as $imagen) {
-            Storage::disk('public')->delete('recintos/galeria/' . $imagen->image);
+            Storage::disk('public')->delete('uploads/recintos/' . $imagen->image);
             $imagen->delete();
         }
 
-        // Eliminar relación con usuarios (si aplica)
         $recinto->users()->detach();
 
-        // Eliminar recinto
         $recinto->delete();
 
         return redirect()->route('recintos.index')->with('success', 'Recinto eliminado exitosamente.');
     }
-
 
     /**
      * Muestra el formulario para agregar usuarios a un recinto.
@@ -236,12 +202,12 @@ class RecintosController extends Controller
 
     public function addUsers(Request $request, Recinto $recinto)
     {
-        // Verifica permisos (equivalente a `denyAccessUnlessGranted` en Symfony)
+        
         if (!Auth::user()->hasRole('ROLE_ADMIN')) {
             abort(403, 'No tienes permisos para realizar esta acción.');
         }
 
-        // Obtener usuarios con el rol 'ROLE_RECINTO' que no están en este recinto
+        
         $users = User::where('role', 'ROLE_RECINTO')
             ->whereNotIn('id', $recinto->users()->pluck('id'))
             ->get();
@@ -266,7 +232,7 @@ class RecintosController extends Controller
      */
     public function storeUser(Request $request, Recinto $recinto)
     {
-        $this->authorize('update', $recinto); // Verifica permisos
+        $this->authorize('update', $recinto); 
 
         $request->validate([
             'user' => 'required|exists:usuarios,id',
@@ -304,79 +270,70 @@ class RecintosController extends Controller
      */
     public function addImages(Request $request, Recinto $recinto)
     {
-        // Verificar permisos: solo el usuario asociado o un admin pueden acceder
+        // Verificación de permisos
         if (!Auth::user()->hasRole('ROLE_ADMIN') && !$recinto->users->contains(Auth::user())) {
             abort(403, 'No tienes permisos para realizar esta acción.');
         }
 
-        // Obtener galería del recinto
-        $miGaleria = GaleriaRecinto::where('recinto', $recinto->id)->get();
+        $miGaleria = $recinto->galeria; 
 
-        // Subir imágenes si se enviaron archivos
         if ($request->hasFile('galeria')) {
             foreach ($request->file('galeria') as $image) {
                 $fileName = md5(uniqid()) . '.' . $image->getClientOriginalExtension();
-                $image->storeAs('recintos/galeria', $fileName, 'public');
+                $image->storeAs('public/uploads/recintos', $fileName);
 
                 GaleriaRecinto::create([
                     'image' => $fileName,
-                    'recinto' => $recinto->id,
+                    'recinto_id' => $recinto->id,
                 ]);
             }
 
-            return redirect()->route('recintos.addImages', $recinto->id)->with('success', 'Imágenes agregadas correctamente.');
+            return redirect()->route('recintos.addImages', $recinto->id)
+                ->with('success', 'Imágenes agregadas correctamente.');
         }
 
         $menu = 'Recintos';
         return view('recintos.addImages', compact('menu', 'recinto', 'miGaleria'));
     }
 
-
+    /**
+     * Agrega imágenes POST para la galería (si tienes un formulario separado).
+     */
     public function storeImages(Request $request, Recinto $recinto)
     {
         $request->validate([
             'galeria' => 'required|array|min:1',
             'galeria.*' => 'image|max:2048',
-        ], [
-            'galeria.required' => 'Debes subir al menos una imagen.',
-            'galeria.min' => 'Debes subir al menos una imagen.',
-            'galeria.*.image' => 'Cada archivo debe ser una imagen válida.',
-            'galeria.*.max' => 'Cada imagen debe pesar menos de 2MB.',
         ]);
 
         foreach ($request->file('galeria') as $image) {
             $fileName = md5(uniqid()) . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('recintos/galeria', $fileName, 'public');
+            $image->storeAs('public/uploads/recintos', $fileName);
 
-            GaleriaRecinto::insert([
+            GaleriaRecinto::create([
                 'image' => $fileName,
-                'recinto' => $recinto->id
+                'recinto_id' => $recinto->id,
             ]);
         }
 
-        return redirect()->route('recintos.addImages', $recinto->id)->with('success', 'Imágenes agregadas correctamente.');
+        return redirect()->route('recintos.addImages', $recinto->id)
+            ->with('success', 'Imágenes agregadas correctamente.');
     }
 
-
     /**
-     * Elimina una imagen de la galería de un recinto.
-     *
-     * @param  \App\Models\GaleriaRecinto  $imagen
-     * @return \Illuminate\Http\RedirectResponse
+     * Elimina una imagen de la galería del recinto.
      */
     public function deleteImage(Recinto $recinto, GaleriaRecinto $imagen)
     {
-        // Verificar permisos
         if (!Auth::user()->hasRole('ROLE_ADMIN') && !$recinto->users->contains(Auth::user())) {
             abort(403, 'No tienes permisos para realizar esta acción.');
         }
 
-        // Eliminar archivo físico
-        Storage::disk('public')->delete('recintos/galeria/' . $imagen->image);
+        Storage::disk('public')->delete('uploads/recintos/' . $imagen->image);
 
-        // Eliminar la imagen de la base de datos
         $imagen->delete();
 
-        return redirect()->route('recintos.addImages', $recinto->id)->with('success', 'Imagen eliminada correctamente.');
+        return redirect()->route('recintos.addImages', $recinto->id)
+            ->with('success', 'Imagen eliminada correctamente.');
     }
 }

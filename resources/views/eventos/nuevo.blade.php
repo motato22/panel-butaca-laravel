@@ -51,37 +51,33 @@
 
                 <div class="col-12 pt-4">
 
-                    {{--
-                        Si existe $evento, estamos en modo edición; 
-                        caso contrario, en modo creación.
-                    --}}
+                    {{-- Modo edición o creación --}}
                     @if (isset($evento->id) && $evento->id)
-                            <form action="{{ route('eventos.update', $evento->id) }}" method="POST" enctype="multipart/form-data">
-                                @csrf
-                                @method('PUT')
-                        @else
-                            <form action="{{ route('eventos.store') }}" method="POST" enctype="multipart/form-data">
-                                @csrf
-                        @endif
+                        <form action="{{ route('eventos.update', $evento->id) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            @method('PUT')
+                    @else
+                        <form action="{{ route('eventos.store') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                    @endif
 
                             {{-- Imagen del evento --}}
                             <div class="form-row">
                                 <div class="col-12 col-md-8 col-lg-6 text-center offset-md-2 offset-lg-3">
                                     @php
-                                    // Si existe un evento y tiene foto, la mostramos
-                                    $currentImage = isset($evento) && $evento->foto
-                                    ? asset('storage/uploads/eventos/' . $evento->foto)
-                                    : null;
+                                        $currentImage = isset($evento) && $evento->foto
+                                            ? asset('storage/uploads/eventos/' . $evento->foto)
+                                            : null;
                                     @endphp
 
                                     @if ($currentImage)
                                         <img class="img-thumbnail max-height-6 mb-2"
-                                            src="{{ $currentImage }}"
-                                            alt="Imagen del evento">
+                                             src="{{ $currentImage }}"
+                                             alt="Imagen del evento">
                                     @else
                                         <img class="img-thumbnail max-height-6 mb-2"
-                                            src="{{ asset('img/placeholder.png') }}"
-                                            alt="Sin imagen">
+                                             src="{{ asset('img/placeholder.png') }}"
+                                             alt="Sin imagen">
                                     @endif
 
                                     <div class="input-group mb-3">
@@ -175,7 +171,7 @@
                             <div id="contenedor_horarios"></div>
                             <hr />
 
-                            <!-- Filtro con dos selects -->
+                            <!-- Filtro con dos selects (Categoría y Género) -->
                             <div class="row">
                                 <div class="col-md-4 form-group">
                                     <label for="selectCategoria">Categoría <span style="color:red">*</span></label>
@@ -436,6 +432,7 @@
 @section('scripts')
 
 @php
+    // Variables para prellenar temporada/unico
     $oldFechaInicioTemporada     = old('fecha_inicio_temporada', '');
     $oldFechaFinTemporada        = old('fecha_fin_temporada', '');
     $oldHorarioTemporadaInicio   = old('horario_temporada_inicio', '');
@@ -444,20 +441,82 @@
 @endphp
 
 <script>
-    // Se carga el JSON de horarios del evento (en modo edición) o se inicializa vacío
+    // DEBUG: Cargamos el JSON de horarios y fechas
     let horarios = @json(isset($evento) ? $evento->horario : null);
     if (!horarios || typeof horarios !== 'object') {
         horarios = {};
     }
 
-    // Variables antiguas para edición, provenientes de Blade
+    let fechaInicioBD = @json(isset($evento->fecha_inicio) ? $evento->fecha_inicio : null);
+    let fechaFinBD    = @json(isset($evento->fecha_fin)    ? $evento->fecha_fin    : null);
+
+    // DEBUG: Revisamos qué valores llegan
+    console.log("DEBUG - fechaInicioBD:", fechaInicioBD, "fechaFinBD:", fechaFinBD);
+    console.log("DEBUG - Horarios crudos:", horarios);
+
+    function esNuevoFormatoHorario(h) {
+        return Array.isArray(h) && 
+               h.length > 0 && 
+               h[0].dias !== undefined && 
+               h[0].horas !== undefined;
+    }
+
+    // Expansión a fechas reales si es el nuevo formato
+    if (esNuevoFormatoHorario(horarios) && fechaInicioBD && fechaFinBD) {
+        let [iYear, iMonth, iDay] = fechaInicioBD.split('-').map(Number);
+        let [fYear, fMonth, fDay] = fechaFinBD.split('-').map(Number);
+
+        let startDate = new Date(`${iYear}-${String(iMonth).padStart(2,"0")}-${String(iDay).padStart(2,"0")}T00:00:00`);
+        let endDate   = new Date(`${fYear}-${String(fMonth).padStart(2,"0")}-${String(fDay).padStart(2,"0")}T00:00:00`);
+
+        let transformado = {};
+
+        // JS getDay(): Dom=0, Lun=1, ... Sab=6
+        // System: 0=Lunes, 6=Domingo => daySistema = (jsDay + 6) % 7
+        function daySistema(jsDay) {
+            return (jsDay + 6) % 7;
+        }
+
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            let sysDay = daySistema(d.getDay());
+            horarios.forEach(item => {
+                if (item.dias.includes(String(sysDay)) || item.dias.includes(sysDay)) {
+                    // DEBUG: console.log("Día coincide:", sysDay, "fecha:", d);
+                    let yyyy = d.getFullYear();
+                    let mm   = String(d.getMonth() + 1).padStart(2, '0');
+                    let dd   = String(d.getDate()).padStart(2, '0');
+                    let fechaClave = `${yyyy}-${mm}-${dd}`;
+
+                    if (!transformado[fechaClave]) {
+                        transformado[fechaClave] = [];
+                    }
+                    if (!transformado[fechaClave].includes(item.horas)) {
+                        transformado[fechaClave].push(item.horas);
+                    }
+                }
+            });
+        }
+
+        // Reemplazamos con la versión expandida
+        horarios = transformado;
+
+        // Forzamos "funciones"
+        document.addEventListener('DOMContentLoaded', function() {
+            let tipoHorarioSelect = document.getElementById("tipo_horario");
+            if (tipoHorarioSelect) {
+                tipoHorarioSelect.value = "funciones";
+                tipoHorarioSelect.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
+    // Variables antiguas
     let oldFechaInicioTemporada   = "{{ $oldFechaInicioTemporada }}";
     let oldFechaFinTemporada      = "{{ $oldFechaFinTemporada }}";
     let oldHorarioTemporadaInicio = "{{ $oldHorarioTemporadaInicio }}";
     let oldHorarioTemporadaFin    = "{{ $oldHorarioTemporadaFin }}";
     let oldFechaUnico             = "{{ $oldFechaUnico }}";
 
-    // Función para actualizar el input oculto con el JSON unificado
     function actualizarHorariosInput() {
         let hiddenField = document.getElementById("horarios_json");
         if (hiddenField) {
@@ -465,7 +524,6 @@
         }
     }
 
-    // Función para renderizar la lista de horarios (para tipo "funciones")
     function renderizarHorarios() {
         let contenedor = document.getElementById("lista_horarios");
         if (!contenedor) return;
@@ -496,7 +554,6 @@
             titulo.classList.add("font-weight-bold", "mb-2");
 
             let [yyyy, mm, dd] = fecha.split("-");
-            // Ajuste: forzamos la hora a mediodía para evitar desfases por zona horaria
             let dateObj = new Date(yyyy, mm - 1, dd, 12);
             titulo.innerHTML = dateObj.toLocaleDateString("es-ES", {
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -536,58 +593,50 @@
         actualizarHorariosInput();
     }
 
-    // Función para actualizar el JSON en el caso "temporada"
+    // Función para "temporada"
     function actualizarHorariosTemporada() {
-        const fechaInicioStr = document.querySelector('input[name="fecha_inicio_temporada"]').value;
-        const fechaFinStr = document.querySelector('input[name="fecha_fin_temporada"]').value;
-        const horarioInicio = document.querySelector('input[name="horario_temporada_inicio"]').value;
-        const horarioFin = document.querySelector('input[name="horario_temporada_fin"]').value;
-        
-        // Obtener los días seleccionados (por ejemplo, "Lunes", "Martes", etc.)
-        const diasCheckboxes = document.querySelectorAll('input[name="dias_temporada[]"]:checked');
-        let diasSeleccionados = [];
-        diasCheckboxes.forEach(cb => {
-            diasSeleccionados.push(cb.value);
-        });
+    const fechaInicioStr   = document.querySelector('input[name="fecha_inicio_temporada"]').value;
+    const fechaFinStr      = document.querySelector('input[name="fecha_fin_temporada"]').value;
+    const horarioInicio    = document.querySelector('input[name="horario_temporada_inicio"]').value;
+    const horarioFin       = document.querySelector('input[name="horario_temporada_fin"]').value;
 
-        // Si faltan datos o no hay días seleccionados, limpia el objeto
-        if (!fechaInicioStr || !fechaFinStr || diasSeleccionados.length === 0) {
-            horarios = {};
-            actualizarHorariosInput();
-            return;
-        }
-
-        // Convertir las fechas de entrada a objetos Date
-        let fechaInicio = new Date(fechaInicioStr);
-        let fechaFin = new Date(fechaFinStr);
-
-        // Reiniciamos el objeto de horarios
+    // Días marcados (lunes, martes, etc.)
+    const diasCheckboxes   = document.querySelectorAll('input[name="dias_temporada[]"]:checked');
+    if (!fechaInicioStr || !fechaFinStr || diasCheckboxes.length === 0) {
         horarios = {};
-
-        // Mapeo para obtener el nombre del día en español (JavaScript: 0=Domingo, 1=Lunes, etc.)
-        const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-
-        // Recorrer desde la fecha de inicio hasta la fecha de fin
-        for (let d = new Date(fechaInicio); d <= fechaFin; d.setDate(d.getDate() + 1)) {
-            let diaNombre = diasSemana[d.getDay()];
-            if (diasSeleccionados.includes(diaNombre)) {
-                // Formatear la fecha en "YYYY-MM-DD"
-                let anio = d.getFullYear();
-                let mes = (d.getMonth() + 1).toString().padStart(2, "0");
-                let dia = d.getDate().toString().padStart(2, "0");
-                let fechaFormateada = `${anio}-${mes}-${dia}`;
-                horarios[fechaFormateada] = [horarioInicio, horarioFin];
-            }
-        }
-
         actualizarHorariosInput();
+        return;
     }
 
-    // Función para actualizar el JSON en el caso "unico_dia"
+    // CAMBIO: Forzamos T00:00:00 para no "desplazar" la fecha
+    let fechaInicio = new Date(`${fechaInicioStr}T00:00:00`);
+    let fechaFin    = new Date(`${fechaFinStr}T00:00:00`);
+
+    horarios = {};
+    const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+    for (let d = new Date(fechaInicio.getTime()); d <= fechaFin; d.setDate(d.getDate() + 1)) {
+        let diaNombre = diasSemana[d.getDay()];
+        if ([...diasCheckboxes].some(cb => cb.value === diaNombre)) {
+            let anio = d.getFullYear();
+            let mes  = String(d.getMonth() + 1).padStart(2, '0');
+            let dia  = String(d.getDate()).padStart(2, '0');
+            let fechaFormateada = `${anio}-${mes}-${dia}`;
+            horarios[fechaFormateada] = [horarioInicio, horarioFin];
+        }
+    }
+    actualizarHorariosInput();
+}
+
+    // Función para "unico_dia"
     function actualizarHorariosUnico() {
-        const fechaUnico = document.querySelector('input[name="fecha_unico"]').value;
-        const horarioInicio = document.querySelector('input[name="horario_temporada_inicio"]').value;
-        const horarioFin = document.querySelector('input[name="horario_temporada_fin"]').value;
+        const fechaUnico     = document.querySelector('input[name="fecha_unico"]').value;
+        const horarioInicio  = document.querySelector('input[name="horario_temporada_inicio"]').value;
+        const horarioFin     = document.querySelector('input[name="horario_temporada_fin"]').value;
+
+        // DEBUG: console.log
+        console.log("[UnicoDia] Called with:", {fechaUnico, horarioInicio, horarioFin});
+
         if (fechaUnico) {
             horarios = {};
             horarios[fechaUnico] = [horarioInicio, horarioFin];
@@ -597,21 +646,25 @@
         actualizarHorariosInput();
     }
 
-    // Función para determinar el tipo de horario a partir del JSON existente (modo edición)
+    // Detectar tipo de horario al editar
     function detectarTipoHorario() {
         let keys = Object.keys(horarios);
+
+        // DEBUG:
+        console.log("horarios en edición:", horarios, "keys:", keys);
+
         let tipoSeleccionado = "";
         if (keys.length === 0) {
-            tipoSeleccionado = ""; // Sin datos; se deja el select sin asignar valor
+            tipoSeleccionado = "";
         } else if (keys.length === 1) {
-            // Si solo hay una fecha y tiene 2 elementos: único día
+            // 2 elementos => "unico_dia", si no => "funciones"
             if (horarios[keys[0]].length === 2) {
                 tipoSeleccionado = "unico_dia";
             } else {
                 tipoSeleccionado = "funciones";
             }
         } else {
-            // Más de una fecha: si todas tienen 2 elementos iguales, es temporada; de lo contrario, funciones
+            // Más de una fecha: si todas tienen 2 elementos iguales => temporada, sino => funciones
             let allSame = true;
             let first = horarios[keys[0]];
             for (let i = 1; i < keys.length; i++) {
@@ -626,18 +679,16 @@
         return tipoSeleccionado;
     }
 
-    // Al cargar el DOM, se determina el tipo de horario según los datos existentes y se dispara el evento change
     document.addEventListener("DOMContentLoaded", function() {
+        console.log("DOMContentLoaded - Attempting to detect type of horario...");
         let tipoHorarioSelect = document.getElementById("tipo_horario");
         if (tipoHorarioSelect) {
-            // Detectar el tipo basado en el JSON
             tipoHorarioSelect.value = detectarTipoHorario();
-            // Despachar el evento para renderizar el bloque correspondiente
             tipoHorarioSelect.dispatchEvent(new Event('change'));
         }
     });
 
-    // Al cambiar el select de tipo de horario, se renderiza el bloque correspondiente y se rellenan los datos (en modo edición)
+    // Listener para changes en el select
     document.getElementById("tipo_horario").addEventListener("change", function() {
         let tipo = this.value;
         let contenedor = document.getElementById("contenedor_horarios");
@@ -678,7 +729,6 @@
                 <input type="hidden" name="horarios" id="horarios_json">
             `;
 
-            // Asignar eventos para actualizar el JSON
             document.querySelector('input[name="fecha_inicio_temporada"]').addEventListener("change", actualizarHorariosTemporada);
             document.querySelector('input[name="fecha_fin_temporada"]').addEventListener("change", actualizarHorariosTemporada);
             document.querySelector('input[name="horario_temporada_inicio"]').addEventListener("change", actualizarHorariosTemporada);
@@ -687,14 +737,11 @@
                 cb.addEventListener("change", actualizarHorariosTemporada);
             });
 
-            // Si existen datos en el JSON, pre-cargamos los valores:
             let keys = Object.keys(horarios);
             if (keys.length > 0) {
                 keys.sort();
-                // Rellenamos la fecha de inicio y fin según el mínimo y máximo de las claves
                 let fechaInicio = keys[0];
                 let fechaFin = keys[keys.length - 1];
-                // Se asume que en cada fecha los horarios son iguales, así que se toman del primero
                 let tiempos = horarios[fechaInicio] || [];
                 document.querySelector('input[name="fecha_inicio_temporada"]').value = fechaInicio;
                 document.querySelector('input[name="fecha_fin_temporada"]').value = fechaFin;
@@ -703,12 +750,10 @@
                     document.querySelector('input[name="horario_temporada_fin"]').value = tiempos[1];
                 }
 
-                // Marcar los checkboxes según los días que aparecen en las fechas del JSON
                 const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 let diasSet = new Set();
                 keys.forEach(fecha => {
                     let [yyyy, mm, dd] = fecha.split("-");
-                    // Ajuste: forzamos la hora a mediodía
                     let d = new Date(yyyy, mm - 1, dd, 12);
                     diasSet.add(diasSemana[d.getDay()]);
                 });
@@ -747,7 +792,6 @@
                 </div>
                 <input type="hidden" name="horarios" id="horarios_json">
             `;
-            // Si existen datos, pre-cargar el primer valor en los inputs
             let keys = Object.keys(horarios);
             if (keys.length > 0) {
                 document.getElementById("fecha_funcion").value = keys[0];
@@ -759,7 +803,7 @@
 
             document.getElementById("btnAgregarFuncion").addEventListener("click", () => {
                 let fechaInput = document.getElementById("fecha_funcion").value;
-                let hora = document.getElementById("hora_funcion").value;
+                let hora       = document.getElementById("hora_funcion").value;
                 if (!fechaInput || !hora) {
                     alert("Selecciona una fecha y una hora.");
                     return;
@@ -797,11 +841,11 @@
                 <input type="hidden" name="horarios" id="horarios_json">
             `;
             if(Object.keys(horarios).length > 0) {
-                let fecha = Object.keys(horarios)[0];
+                let fecha   = Object.keys(horarios)[0];
                 let tiempos = horarios[fecha];
                 document.querySelector('input[name="fecha_unico"]').value = fecha;
                 document.querySelector('input[name="horario_temporada_inicio"]').value = tiempos[0];
-                document.querySelector('input[name="horario_temporada_fin"]').value = tiempos[1];
+                document.querySelector('input[name="horario_temporada_fin"]').value    = tiempos[1];
             }
             document.querySelector('input[name="fecha_unico"]').addEventListener("change", actualizarHorariosUnico);
             document.querySelector('input[name="horario_temporada_inicio"]').addEventListener("change", actualizarHorariosUnico);

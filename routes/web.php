@@ -136,7 +136,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('galeria/{imagen}', [EventosController::class, 'deleteImage'])->name('eventos.deleteImage');
 
         // Duplicar evento
-        Route::post('{evento}/duplicar', [EventosController::class, 'duplicateEvent'])->name('eventos.duplicar');
+        Route::get('{evento}/duplicate', [EventosController::class, 'duplicate'])->name('eventos.duplicate');
 
         // Horarios
         Route::post('/horario/agregar', [EventosController::class, 'agregarHorario'])->name('eventos.horario.agregar');

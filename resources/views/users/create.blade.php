@@ -27,6 +27,15 @@
                     </div>
                 </div>
                 @endif
+                @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $mensaje)
+                        <li>{{ $mensaje }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
 
                 <div class="col-12 pt-4">
 

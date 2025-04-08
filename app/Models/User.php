@@ -136,9 +136,9 @@ class User extends Authenticatable
      */
     public static function user_by_email($email, $old_email = false)
     {
-        $query = User::where('email', '=', $email);
+        $query = User::where('correo', '=', $email);
 
-        $query = $old_email ? $query->where('email', '!=', $old_email)->get() : $query->get();
+        $query = $old_email ? $query->where('correo', '!=', $old_email)->get() : $query->get();
 
         return $query;
     }

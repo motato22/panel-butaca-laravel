@@ -57,14 +57,19 @@ class UsersController extends Controller
 
     public function add(Request $request)
     {
+        
         $validated = $request->validate([
-            'nombre' => 'required|string|max:150',
-            'username' => 'required|string|max:190|unique:usuarios,username',
-            'correo' => 'required|email|unique:usuarios,correo',
-            'plainPassword' => 'nullable|string|max:190',
-            'role' => 'required|string|in:ROLE_ADMIN,ROLE_USER,ROLE_RECINTO',
-            'segmento' => 'nullable|string|max:80',
+            'nombre'       => 'required|string|max:150',
+            'username'     => 'required|string|max:190|unique:usuarios,username',
+            'correo'       => 'required|email|unique:usuarios,correo',
+            'plainPassword'=> 'nullable|string|max:190',
+            'role'         => 'required|string|in:ROLE_ADMIN,ROLE_USER,ROLE_RECINTO',
+            'segmento'     => 'nullable|string|max:80',
+        ], [
+            'correo.unique'   => 'Este correo ya está registrado.',
+            'username.unique' => 'Este username ya existe, elige otro.',
         ]);
+      
 
         $user = new User([
             'nombre' => $validated['nombre'],
@@ -75,6 +80,7 @@ class UsersController extends Controller
         ]);
 
         $user->password = bcrypt($validated['plainPassword'] ?? Str::random(10));
+        
         $user->save();
 
         return redirect()->route('users.index')->with('success', 'Usuario creado exitosamente.');

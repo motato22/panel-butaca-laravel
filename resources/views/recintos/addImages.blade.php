@@ -57,7 +57,7 @@
                             <tbody>
                                 @forelse($miGaleria as $imagen)
                                 <tr class="text-center">
-                                    <td><img src="{{ asset('storage/recintos/galeria/' . $imagen->image) }}" height="80" alt=""></td>
+                                    <td><img src="{{ asset('storage/uploads/recintos/' . $imagen->image) }}" height="80" alt=""></td>
                                     <td>
                                         <form action="{{ route('recintos.deleteImage', ['recinto' => $recinto->id, 'imagen' => $imagen->id]) }}" method="POST" style="display:inline;">
                                             @csrf
