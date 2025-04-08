@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Auth;
+namespace App\Http\Controllers\Api\Mobile\Auth;
+
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
