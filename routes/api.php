@@ -9,19 +9,19 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
   });
 /**** Acceso */
 Route::post('login_check', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@authenticate');
-Route::post('auth/user/create', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@register');
-Route::get('v1/usuario/perfil/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@perfil');
-Route::put('auth/user/update/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@editPerfil');
-Route::post('token/refresh', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@refresh');
-Route::post('password/reset', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@resetPassword');
-Route::post('auth/email/exist', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@existsEmail');
-Route::post('auth/username/exist', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@existsUsername');
-Route::post('/auth/user/udeg/check', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@checkUdegUser');
-Route::post('/auth/user/udeg/checkExternal', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@checkUdegUserExternal');
-Route::post('/auth/user/udeg/checkStatus', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@checkStatusUdegUser');
-Route::post('fcm/token/{token}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@registrarFCMToken');
-Route::post('auth/user/update/foto/{id}', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@updateFotoPerfil');
-Route::post('v1/usuario/signoff', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@logout');
+Route::post('auth/user/create', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@register');
+Route::get('v1/usuario/perfil/{id}', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@perfil');
+Route::put('auth/user/update/{id}', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@editPerfil');
+Route::post('token/refresh', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@refresh');
+Route::post('password/reset', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@resetPassword');
+Route::post('auth/email/exist', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@existsEmail');
+Route::post('auth/username/exist', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@existsUsername');
+Route::post('/auth/user/udeg/check', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@checkUdegUser');
+Route::post('/auth/user/udeg/checkExternal', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@checkUdegUserExternal');
+Route::post('/auth/user/udeg/checkStatus', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@checkStatusUdegUser');
+Route::post('fcm/token/{token}', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@registrarFCMToken');
+Route::post('auth/user/update/foto/{id}', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@updateFotoPerfil');
+Route::post('v1/usuario/signoff', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@logout');
 
 Route::get('categorias', 'App\Http\Controllers\API\Mobile\Categories\CategoriesController@index');
 Route::put('categorias/{id}', 'App\Http\Controllers\API\Mobile\Categories\CategoriesController@update');
