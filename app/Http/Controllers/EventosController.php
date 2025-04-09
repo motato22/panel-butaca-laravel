@@ -371,7 +371,7 @@ class EventosController extends Controller
 
         foreach ($request->file('galeria') as $image) {
             GaleriaEvento::create([
-                'image'     => $image->store('uploads/eventos/galeria', 'public'),
+                'image'     => $image->store('uploads/eventos', 'public'),
                 'evento_id' => $evento->id,
             ]);
         }
