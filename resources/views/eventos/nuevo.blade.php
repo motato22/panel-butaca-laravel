@@ -856,154 +856,162 @@
 
     // LÓGICA DE GÉNEROS (AJAX O SIN AJAX)
     @if(isset($evento->id))
-        // LÓGICA DE EDICIÓN (AJAX)
-        const eventoId        = "{{ $evento->id }}";
-        const urlFetchGeneros = "{{ url('categorias') }}/"; 
-        const urlAttachGenero = "{{ route('eventos.attachGenero', $evento->id) }}";
-        const urlDetachGenero = "{{ url('eventos') }}/" + eventoId + "/generos/";
+    // MODO EDICIÓN: usar AJAX (attach/detach)
+    const eventoId        = "{{ $evento->id }}";
+    const urlAttachGenero = "{{ route('eventos.attachGenero', $evento->id) }}";
+    // Quedaría algo como: /eventos/123/generos
+    const urlDetachGenero = "/eventos/" + eventoId + "/generos/";
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectCategoria = document.getElementById('selectCategoria');
-            const selectGenero    = document.getElementById('selectGenero');
-            const btnAgregar      = document.getElementById('btnAgregar');
-            const tablaGeneros    = document.getElementById('tablaGeneros');
+    const urlFetchGenerosCategoria = "/categorias/"; 
+    // => /categorias/{id}/generos
 
-            selectCategoria.addEventListener('change', () => {
-                const categoriaId = selectCategoria.value;
-                if (!categoriaId) {
-                    selectGenero.innerHTML = '<option value="">-- Selecciona un género --</option>';
-                    return;
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectCategoria = document.getElementById('selectCategoria');
+        const selectGenero    = document.getElementById('selectGenero');
+        const btnAgregar      = document.getElementById('btnAgregar');
+        const tablaGeneros    = document.getElementById('tablaGeneros');
+
+        // Al cambiar categoría => cargar géneros
+        selectCategoria.addEventListener('change', () => {
+            const catId = selectCategoria.value;
+            if (!catId) {
+                selectGenero.innerHTML = '<option value="">-- Selecciona un género --</option>';
+                return;
+            }
+            fetch(urlFetchGenerosCategoria + catId + '/generos')
+                .then(res => res.json())
+                .then(data => {
+                    let opciones = '<option value="">-- Selecciona un género --</option>';
+                    data.forEach(g => {
+                        opciones += `<option value="${g.id}">${g.nombre}</option>`;
+                    });
+                    selectGenero.innerHTML = opciones;
+                })
+                .catch(console.error);
+        });
+
+        // Al hacer clic en "Agregar"
+        btnAgregar.addEventListener('click', () => {
+            const generoId = selectGenero.value;
+            if (!generoId) {
+                alert("Selecciona un género primero");
+                return;
+            }
+            // Llamamos AJAX POST /eventos/{evento}/generos
+            fetch(urlAttachGenero, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ genero_id: generoId })
+            })
+            .then(res => res.json())
+            .then(response => {
+                if (response.success) {
+                    // Para mostrarlo en la tabla, podemos volver a cargar la info
+                    // o hacer un fetch a /api/generos/{generoId}, etc.
+                    // En tu ejemplo, usas fetch(`/api/generos/${generoId}`) (asegúrate de tener esa ruta).
+                    // Aquí, para simplificar, asumimos que ya conocemos la categoría
+                    // a partir de selectCategoria.
+
+                    const catText = selectCategoria.options[selectCategoria.selectedIndex].text;
+                    const genText = selectGenero.options[selectGenero.selectedIndex].text;
+
+                    let fila = document.createElement('tr');
+                    fila.dataset.generoId = generoId;
+                    fila.innerHTML = `
+                        <td>${catText}</td>
+                        <td>${genText}</td>
+                        <td>
+                            <button type="button" class="btn btn-danger btnBorrar">Borrar</button>
+                        </td>
+                    `;
+                    tablaGeneros.appendChild(fila);
+
+                } else {
+                    alert(response.message || 'Error al agregar género');
                 }
-                fetch(urlFetchGeneros + categoriaId + '/generos')
-                    .then(res => res.json())
-                    .then(data => {
-                        let opciones = '<option value="">-- Selecciona un género --</option>';
-                        data.forEach(g => {
-                            opciones += `<option value="${g.id}">${g.nombre}</option>`;
-                        });
-                        selectGenero.innerHTML = opciones;
-                    })
-                    .catch(err => console.error(err));
-            });
+            })
+            .catch(console.error);
+        });
 
-            btnAgregar.addEventListener('click', () => {
-                const generoId = selectGenero.value;
-                if (!generoId) {
-                    alert("Selecciona un género primero");
-                    return;
-                }
-                fetch(urlAttachGenero, {
-                        method: 'POST',
+        // Al hacer clic en "Borrar" un género
+        tablaGeneros.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btnBorrar')) {
+                let fila = e.target.closest('tr');
+                let generoId = fila.dataset.generoId;
+                if (confirm('¿Seguro que deseas quitar este género?')) {
+                    fetch(urlDetachGenero + generoId, {
+                        method: 'DELETE',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ genero_id: generoId })
-                    })
-                    .then(res => res.json())
-                    .then(response => {
-                        if (response.success) {
-                            fetch(`/api/generos/${generoId}`)
-                                .then(r => r.json())
-                                .then(gen => {
-                                    let fila = document.createElement('tr');
-                                    fila.setAttribute('data-genero-id', gen.id);
-                                    fila.innerHTML = `
-                                        <td>${gen.categoria.nombre}</td>
-                                        <td>${gen.nombre}</td>
-                                        <td>
-                                            <button type="button" class="btn btn-danger btnBorrar">Borrar</button>
-                                        </td>
-                                    `;
-                                    tablaGeneros.appendChild(fila);
-                                });
-                        } else {
-                            alert(response.message || 'Error al agregar género');
                         }
                     })
-                    .catch(err => console.error(err));
-            });
-
-            tablaGeneros.addEventListener('click', (e) => {
-                if (e.target.classList.contains('btnBorrar')) {
-                    let fila = e.target.closest('tr');
-                    let generoId = fila.dataset.generoId;
-                    if (confirm('¿Seguro que deseas quitar este género?')) {
-                        fetch(urlDetachGenero + generoId, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                }
-                            })
-                            .then(res => res.json())
-                            .then(resp => {
-                                if (resp.success) {
-                                    fila.remove();
-                                } else {
-                                    alert(resp.message || 'Error al borrar');
-                                }
-                            })
-                            .catch(err => console.error(err));
-                    }
-                }
-            });
-        });
-    @else
-        // LÓGICA DE CREACIÓN (SIN AJAX)
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectCategoria = document.getElementById('selectCategoria');
-            const selectGenero    = document.getElementById('selectGenero');
-            const btnAgregar      = document.getElementById('btnAgregar');
-            const tablaGeneros    = document.getElementById('tablaGeneros');
-
-            selectCategoria.addEventListener('change', () => {
-                const categoriaId = selectCategoria.value;
-                if (!categoriaId) {
-                    selectGenero.innerHTML = '<option value="">-- Selecciona un género --</option>';
-                    return;
-                }
-                fetch('/categorias/' + categoriaId + '/generos')
                     .then(res => res.json())
-                    .then(data => {
-                        let opciones = '<option value="">-- Selecciona un género --</option>';
-                        data.forEach(g => {
-                            opciones += `<option value="${g.id}">${g.nombre}</option>`;
-                        });
-                        selectGenero.innerHTML = opciones;
+                    .then(resp => {
+                        if (resp.success) {
+                            fila.remove();
+                        } else {
+                            alert(resp.message || 'Error al quitar género');
+                        }
                     })
-                    .catch(err => console.error(err));
-            });
-
-            btnAgregar.addEventListener('click', () => {
-                const generoId = selectGenero.value;
-                if (!generoId) {
-                    alert("Selecciona un género primero");
-                    return;
+                    .catch(console.error);
                 }
-                const categoriaTxt = selectCategoria.options[selectCategoria.selectedIndex].text;
-                const generoTxt    = selectGenero.options[selectGenero.selectedIndex].text;
-                let fila = document.createElement('tr');
-                fila.innerHTML = `
-                    <td>${categoriaTxt}</td>
-                    <td>${generoTxt}</td>
-                    <td>
-                        <button type="button" class="btn btn-danger btnBorrar">Borrar</button>
-                    </td>
-                `;
-                let inputHidden = document.createElement('input');
-                inputHidden.type  = 'hidden';
-                inputHidden.name  = 'generos[]';
-                inputHidden.value = generoId;
-                fila.appendChild(inputHidden);
-                tablaGeneros.appendChild(fila);
-            });
-
-            tablaGeneros.addEventListener('click', (e) => {
-                if (e.target.classList.contains('btnBorrar')) {
-                    e.target.closest('tr').remove();
-                }
-            });
+            }
         });
+    });
+    @else
+    // MODO CREACIÓN: sin AJAX, solo inputs ocultos
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectCategoria = document.getElementById('selectCategoria');
+        const selectGenero    = document.getElementById('selectGenero');
+        const btnAgregar      = document.getElementById('btnAgregar');
+        const tablaGeneros    = document.getElementById('tablaGeneros');
+
+        selectCategoria.addEventListener('change', () => {
+            const catId = selectCategoria.value;
+            if (!catId) {
+                selectGenero.innerHTML = '<option value="">-- Selecciona un género --</option>';
+                return;
+            }
+            fetch('/categorias/' + catId + '/generos')
+                .then(res => res.json())
+                .then(data => {
+                    let opciones = '<option value="">-- Selecciona un género --</option>';
+                    data.forEach(g => {
+                        opciones += `<option value="${g.id}">${g.nombre}</option>`;
+                    });
+                    selectGenero.innerHTML = opciones;
+                })
+                .catch(console.error);
+        });
+
+        btnAgregar.addEventListener('click', () => {
+            const generoId = selectGenero.value;
+            if (!generoId) {
+                alert("Selecciona un género primero");
+                return;
+            }
+            const catTxt = selectCategoria.options[selectCategoria.selectedIndex].text;
+            const genTxt = selectGenero.options[selectGenero.selectedIndex].text;
+
+            let fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td>${catTxt}</td>
+                <td>${genTxt}</td>
+                <td><button type="button" class="btn btn-danger btnBorrar">Borrar</button></td>
+                <input type="hidden" name="generos[]" value="${generoId}">
+            `;
+            tablaGeneros.appendChild(fila);
+        });
+
+        tablaGeneros.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btnBorrar')) {
+                e.target.closest('tr').remove();
+            }
+        });
+    });
     @endif
 </script>
 @endsection

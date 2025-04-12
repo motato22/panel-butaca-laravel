@@ -192,6 +192,7 @@ class EventosController extends Controller
 
         // Sincronizar géneros en la pivote (genero_evento)
         $evento->generos()->sync($request->input('generos', []));
+        
 
         return redirect()->route('eventos.index')->with('success', 'Evento creado correctamente.');
     }
@@ -252,6 +253,7 @@ class EventosController extends Controller
      */
     public function update(Request $request, Evento $evento)
     {
+
         $request->validate([
             'nombre'       => 'required|string|max:190',
             'recinto'      => 'required|exists:recinto,id',
@@ -259,15 +261,12 @@ class EventosController extends Controller
             'horarios'     => [
                 'required',
                 function ($attribute, $value, $fail) {
-                    // Si es string, que sea JSON decodificable
                     if (is_string($value)) {
                         json_decode($value, true);
                         if (json_last_error() !== JSON_ERROR_NONE) {
                             $fail('El campo horarios debe ser un JSON válido.');
                         }
-                    }
-                    // Si no es string ni array, fallamos
-                    elseif (!is_array($value)) {
+                    } elseif (!is_array($value)) {
                         $fail('El campo horarios debe ser JSON válido o un array.');
                     }
                 }
@@ -276,25 +275,22 @@ class EventosController extends Controller
             'precio_alto' => $request->has('es_gratuito') ? 'nullable' : 'required|string|max:190',
             'descripcion' => 'required|string',
             'es_gratuito' => 'nullable|boolean',
-            'generos'     => 'array',
-            'generos.*'   => 'exists:generos,id',
+            // Omitimos 'generos' aquí para no obligar a enviar ni hacer sync()
         ]);
 
-        // Rellenamos excepto “foto” y “horarios” para tratarlos aparte
-        $evento->fill($request->except(['foto', 'horarios', 'generos']));
-
+        // Rellenar
+        $evento->fill($request->except(['foto', 'horarios', 'generos', 'es_gratuito']));
         $evento->recinto     = (int) $request->input('recinto');
         $evento->es_gratuito = $request->has('es_gratuito') ? 1 : 0;
 
-        // Si es gratuito, forzamos precios a 0
         if ($evento->es_gratuito) {
             $evento->precio_bajo = '0';
             $evento->precio_alto = '0';
         }
 
-        // Manejo de la imagen en actualización
+        // Manejo de la imagen (actualización)
         if ($request->hasFile('foto')) {
-            // Borrar la imagen anterior si existe
+            // Borrar la anterior
             if ($evento->foto) {
                 Storage::disk('public')->delete('uploads/eventos/' . $evento->foto);
             }
@@ -303,47 +299,36 @@ class EventosController extends Controller
             $evento->foto = $fileName;
         }
 
-        // Manejo del horario (aceptamos string o array, y unificamos a string JSON)
-        if ($request->filled('horarios')) {
-            $rawHorarios = $request->input('horarios');
-            if (is_string($rawHorarios)) {
-                $horarios = json_decode($rawHorarios, true);
-            } elseif (is_array($rawHorarios)) {
-                $horarios = $rawHorarios;
-            } else {
-                $horarios = [];
-            }
-
-            // Si no hubo error en la decodificación (o si ya era array)
-            if (json_last_error() === JSON_ERROR_NONE || is_array($horarios)) {
-                $evento->horario = json_encode($horarios);
-                // Si usas las keys del array como fechas
-                $fechas = array_keys($horarios);
-                if (!empty($fechas)) {
-                    sort($fechas);
-                    $evento->fecha_inicio = $fechas[0];
-                    $evento->fecha_fin    = end($fechas);
-                } else {
-                    $evento->fecha_inicio = null;
-                    $evento->fecha_fin    = null;
-                }
-            } else {
-                return back()->withErrors(['horarios' => 'Error al procesar los horarios.']);
-            }
+        // Manejo de horarios
+        $rawHorarios = $request->input('horarios');
+        if (is_string($rawHorarios)) {
+            $horarios = json_decode($rawHorarios, true);
+        } elseif (is_array($rawHorarios)) {
+            $horarios = $rawHorarios;
         } else {
-            $evento->horario      = null;
-            $evento->fecha_inicio = null;
-            $evento->fecha_fin    = null;
+            $horarios = [];
+        }
+        if (json_last_error() === JSON_ERROR_NONE || is_array($horarios)) {
+            $evento->horario = json_encode($horarios);
+
+            $fechas = array_keys($horarios);
+            if (!empty($fechas)) {
+                sort($fechas);
+                $evento->fecha_inicio = $fechas[0];
+                $evento->fecha_fin    = end($fechas);
+            } else {
+                $evento->fecha_inicio = null;
+                $evento->fecha_fin    = null;
+            }
         }
 
-        // Guardamos primero el evento
+        // Guardar
         $evento->save();
 
-        // Sincronizar géneros en la pivote
-        $evento->generos()->sync($request->input('generos', []));
+        // NO hacemos sync() de géneros, porque ya lo manejamos con attach/detach
 
         return redirect()->route('eventos.index')
-            ->with('success', 'Evento actualizado correctamente.');
+                         ->with('success', 'Evento actualizado correctamente.');
     }
 
     /**
@@ -396,7 +381,7 @@ class EventosController extends Controller
             'genero_id' => 'required|exists:generos,id'
         ]);
 
-        $evento->generos()->attach($request->input('genero_id'));
+        $evento->generos()->syncWithoutDetaching($request->input('genero_id'));
 
         // Respuesta JSON si manejas todo por AJAX
         return response()->json([

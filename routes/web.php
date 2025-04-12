@@ -29,6 +29,9 @@ use App\Http\Controllers\ZonaRecintoController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+// routes/web.php
+
+
 
 Route::get('/', function () {
     return auth()->check() ? redirect('dashboard') : redirect('login');
@@ -127,8 +130,8 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{evento}', [EventosController::class, 'destroy'])->name('eventos.destroy');
 
         // Gestión de géneros asociados a un evento
-        Route::get('{evento}/addGeneros', [EventosController::class, 'addGeneros'])->name('eventos.addGeneros');
-        Route::delete('{evento}/{genero}/delGeneros', [EventosController::class, 'delGeneros'])->name('eventos.delGeneros');
+        // Route::get('{evento}/addGeneros', [EventosController::class, 'addGeneros'])->name('eventos.addGeneros');
+        // Route::delete('{evento}/{genero}/delGeneros', [EventosController::class, 'delGeneros'])->name('eventos.delGeneros');
 
         // Gestión de imágenes del evento
         Route::get('{evento}/galeria', [EventosController::class, 'addImages'])->name('eventos.addImages');
@@ -145,6 +148,7 @@ Route::middleware(['auth'])->group(function () {
         // Activación recomendada
         Route::get('{evento}/recomendado/toggle', [EventosController::class, 'toggleActivacion'])->name('eventos.toggleActivacion');
     });
+    
 
     // Devuelve los géneros de una categoría en JSON (para el select de géneros)
     Route::get('/categorias/{categoria}/generos', [CategoriasController::class, 'getGeneros'])
