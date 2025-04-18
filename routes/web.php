@@ -48,7 +48,7 @@ Route::get('reset-preview', function () {
 });
 
 // Login
-Route::post('login', [LoginController::class, 'index'])->name('login');
+Route::post('login', [LoginController::class, 'index'])->name('login.perform');
 
 // Logout url
 Route::get('logout', [LoginController::class, 'logout'])->name('logout');
