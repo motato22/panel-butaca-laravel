@@ -70,15 +70,13 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('users')->group(function () {
         Route::get('/', [UsersController::class, 'index'])->name('users.index');
         Route::get('/create', [UsersController::class, 'create'])->name('users.create');
+        Route::post('/add', [UsersController::class, 'add'])->name('users.add');
         Route::get('/{id}/edit', [UsersController::class, 'edit'])->name('users.edit');
         Route::post('/{id}/update', [UsersController::class, 'update'])->name('users.update');
-        Route::post('add', [UsersController::class, 'add'])->name('users.add');
+        Route::delete('/{id}', [UsersController::class, 'delete'])->name('users.destroy');
         Route::get('/{id}/toggle-activation', [UsersController::class, 'toggleActivation'])->name('users.toggleActivation');
-        Route::resource('users', UsersController::class)->except(['destroy']);
         Route::post('/notification/send', [UsersController::class, 'sendNotification'])->name('users.sendNotification');
         Route::post('/notification/bulk-send', [UsersController::class, 'sendBulkNotification'])->name('users.sendBulkNotification');
-        // Route::post('/notificaciones/enviar', [NotificacionesController::class, 'enviar'])->name('notificaciones.enviar');
-        Route::delete('/{id}', [UsersController::class, 'delete'])->name('users.destroy');
     });
 
     // Categorias
@@ -164,9 +162,6 @@ Route::middleware(['auth'])->group(function () {
 
     //Zonas
     Route::resource('zonas', ZonaRecintoController::class);
-    // Ruta manual para eliminar:
-    Route::delete('/zonas/{zona}', [ZonaRecintoController::class, 'destroy'])
-        ->name('zonas.destroy');
 
     // Tipo Zonas
     Route::prefix('/tipoZona')->name('tipo_zona.')->group(function () {
