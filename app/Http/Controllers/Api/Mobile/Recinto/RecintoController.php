@@ -13,44 +13,40 @@ class RecintoController extends Controller
     public function index(Request $request)
     {
         try {
-            $hoy = Carbon::now('America/Mexico_City')->format('Y-m-d');
+            $hoy = Carbon::now()
+                ->setTimezone('America/Mexico_City')
+                ->format('Y-m-d');
 
-            $recintos = Recinto::whereHas('eventos', function ($query) use ($hoy) {
-                    $query->where('fecha_inicio', '>=', $hoy)
-                          ->orWhere('fecha_fin', '>=', $hoy);
+            $recintos = Recinto::whereHas('eventos', function ($q) use ($hoy) {
+                    $q->where('fecha_inicio', '>=', $hoy)
+                      ->orWhere('fecha_fin', '>=', $hoy);
                 })
                 ->orderBy('nombre')
-                ->get()
-                ->map(function ($recinto) {
-                    $recinto->foto_url = Storage::disk('public')
-                        ->url('uploads/recintos/' . $recinto->foto);
-                    return $recinto;
-                });
+                ->get();
+
+            return response()->json($recintos);
         } catch (\Throwable $th) {
+            \Log::error($th);
             return response()->json([
-                'exito'   => false,
-                'msg'     => $th->getMessage(),
-                'status'  => 500
+                'exito'  => false,
+                'msg'    => $th->getMessage(),
+                'status' => 500,
             ], 500);
         }
-
-        return response()->json($recintos);
     }
 
     public function show(Request $request, $id)
     {
         try {
-            $recinto = Recinto::findOrFail($id);
-            $recinto->foto_url = Storage::disk('public')
-                ->url('uploads/recintos/' . $recinto->foto);
+            $recinto = DB::table('recinto')->where('id', $id)->get();
+            return response()->json($recinto);
         } catch (\Throwable $th) {
+            \Log::error($th);
             return response()->json([
-                'exito'   => false,
-                'msg'     => $th->getMessage(),
-                'status'  => 500
+                'exito'  => false,
+                'msg'    => $th->getMessage(),
+                'status' => 500,
             ], 500);
         }
-
-        return response()->json($recinto);
     }
 }
