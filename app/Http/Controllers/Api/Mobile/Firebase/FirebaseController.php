@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Mobile\Auth;
+namespace App\Http\Controllers\Api\Mobile\Firebase;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\ControllersClasificador;
+namespace App\Http\Controllers\Api\Mobile\Clasificador;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
