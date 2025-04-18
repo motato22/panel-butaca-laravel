@@ -13,32 +13,40 @@ class RecintoController extends Controller
     public function index(Request $request)
     {
         try {
-            // Obtener la fecha actual
-            $hoy = Carbon::now();
-            $fechaMexico = Carbon::parse($hoy)->setTimezone('America/Mexico_City');
+            $hoy = Carbon::now()
+                ->setTimezone('America/Mexico_City')
+                ->format('Y-m-d');
 
-            // Formatear solo la fecha en formato YYYY-MM-DD
-            $hoy = $fechaMexico->format('Y-m-d');
-            // Consulta con join y filtros
-            $recintos = Recinto::whereHas('eventos', function ($query) use ($hoy) {
-                $query->where('fecha_inicio', '>=', $hoy)
+            $recintos = Recinto::whereHas('eventos', function ($q) use ($hoy) {
+                    $q->where('fecha_inicio', '>=', $hoy)
                       ->orWhere('fecha_fin', '>=', $hoy);
-            })
-            ->orderBy('nombre') // Ordena por nombre del recinto
-            ->get();
+                })
+                ->orderBy('nombre')
+                ->get();
+
+            return response()->json($recintos);
         } catch (\Throwable $th) {
-            return \Response::json(['exito' => 'false', 'msg' => $th,'status' => '500'], 500);
+            \Log::error($th);
+            return response()->json([
+                'exito'  => false,
+                'msg'    => $th->getMessage(),
+                'status' => 500,
+            ], 500);
         }
-        return \Response::json($recintos);
     }
 
-    public function show(Request $request,$id)
+    public function show(Request $request, $id)
     {
         try {
-            $recinto = DB::table('recinto')->where('id','=',$id)->get();
+            $recinto = DB::table('recinto')->where('id', $id)->get();
+            return response()->json($recinto);
         } catch (\Throwable $th) {
-            return \Response::json(['exito' => 'false', 'msg' => $th,'status' => '500'], 500);
+            \Log::error($th);
+            return response()->json([
+                'exito'  => false,
+                'msg'    => $th->getMessage(),
+                'status' => 500,
+            ], 500);
         }
-        return \Response::json($recinto);
     }
 }

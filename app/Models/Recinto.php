@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Evento; 
 
 class Recinto extends Model
 {
@@ -57,5 +58,9 @@ class Recinto extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'usuario_recinto', 'recinto_id', 'usuario_id');
+    }
+    public function eventos()
+    {
+        return $this->hasMany(Evento::class, 'recinto', 'id');
     }
 }
