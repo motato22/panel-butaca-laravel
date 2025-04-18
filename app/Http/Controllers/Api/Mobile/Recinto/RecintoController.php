@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Recinto;
+namespace App\Http\Controllers\Api\Mobile\Recinto;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

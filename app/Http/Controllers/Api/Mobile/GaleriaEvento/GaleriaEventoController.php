@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\GaleriaEvento;
+namespace App\Http\Controllers\Api\Mobile\GaleriaEvento;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

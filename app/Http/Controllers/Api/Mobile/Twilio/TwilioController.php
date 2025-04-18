@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Twilio;
+namespace App\Http\Controllers\Api\Mobile\Twilio;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

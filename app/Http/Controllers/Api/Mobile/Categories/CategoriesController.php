@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Categories;
+namespace App\Http\Controllers\Api\Mobile\Categories;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

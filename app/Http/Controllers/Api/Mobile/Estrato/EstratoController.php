@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Estrato;
+namespace App\Http\Controllers\Api\Mobile\Estrato;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

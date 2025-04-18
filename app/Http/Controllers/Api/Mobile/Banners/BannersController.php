@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Banners;
+namespace App\Http\Controllers\Api\Mobile\Banners;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

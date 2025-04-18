@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Evento;
+namespace App\Http\Controllers\Api\Mobile\Evento;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

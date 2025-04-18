@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Intereses;
+namespace App\Http\Controllers\Api\Mobile\Intereses;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

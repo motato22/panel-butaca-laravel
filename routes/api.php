@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth:sanctum']], function() {    
-    Route::post('v1/usuario/signoff', 'App\Http\Controllers\API\Mobile\Auth\AuthenticationController@logout');
+    Route::post('v1/usuario/signoff', 'App\Http\Controllers\Api\Mobile\Auth\AuthenticationController@logout');
    // Route::post('v1/usuario/signoff',   [AuthController::class, 'logout']);
   });
 /**** Acceso */

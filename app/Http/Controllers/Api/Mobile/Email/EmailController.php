@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\Mobile\Email;
+namespace App\Http\Controllers\Api\Mobile\Email;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
