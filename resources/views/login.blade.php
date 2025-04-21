@@ -75,7 +75,7 @@
                                 </p> --}}
                             </div>
                             <h3 class="text-center p-b-20 fw-400">Login</h3>
-                            <form class="needs-validation" action="{{url('login.perform')}}" method="POST">
+                            <form class="needs-validation" action="{{route('login.perform')}}" method="POST">
                                 {{csrf_field()}}
                                 @if( request()->session()->has('msg') )
                                 <div class="errors error_list text-center">
