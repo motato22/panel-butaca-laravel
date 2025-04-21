@@ -56,8 +56,13 @@ class CategoriasController extends Controller
 
         // Guardar la imagen si se sube un archivo
         if ($request->hasFile('thumbnailFile')) {
-            $imagePath = $request->file('thumbnailFile')->store('categorias', 'public'); // Guarda en storage/app/public/categorias
-            $categoria->thumbnail = $imagePath;
+            $file = $request->file('thumbnailFile');
+            // Genera un nombre único (puedes usar time(), uuid, etc.)
+            $filename = time() . '_' . $file->getClientOriginalName();
+            // Mueve el archivo a public/uploads/categorias
+            $file->move(public_path('uploads/categorias'), $filename);
+            // Guarda la ruta relativa en la BD
+            $categoria->thumbnail = 'uploads/categorias/' . $filename;
         }
 
         $categoria->save();
@@ -96,8 +101,10 @@ class CategoriasController extends Controller
 
         // Verificar si se subió una nueva imagen
         if ($request->hasFile('thumbnailFile')) {
-            $imagePath = $request->file('thumbnailFile')->store('categorias', 'public');
-            $categoria->thumbnail = $imagePath;
+            $file = $request->file('thumbnailFile');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/categorias'), $filename);
+            $categoria->thumbnail = 'uploads/categorias/' . $filename;
         }
 
         $categoria->save();
