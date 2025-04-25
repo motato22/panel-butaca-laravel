@@ -330,9 +330,9 @@ class AuthenticationController extends Controller
             if ($request->file('imagen')) {
                 $imagen = $request->file('imagen');
                 $nombreImagen = time() . '.' . $imagen->getClientOriginalExtension();
-                $destino = 'imagenes_subidas/';
+                $destino = 'uploads/usuarios';
                 $path = $imagen->storeAs($destino, $nombreImagen, 'public');
-                $pathImagen = '/storage/imagenes_subidas/' . $nombreImagen;
+                $pathImagen = '/storage/uploads/usuarios/' . $nombreImagen;
                 $edit = User::find($id);
                 $edit->foto = $pathImagen ?? $edit->foto;
                 $edit->foto_url = $pathImagen ?? $edit->foto_url;
